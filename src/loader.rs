@@ -147,7 +147,6 @@ impl AssetLoader<Map> for TiledMapLoader {
                 let mut positions = Vec::new();
                 let mut normals = Vec::new();
                 let mut uvs = Vec::new();
-                let mut indices = Vec::new();
                 
                 for tile in chunk.tiles.iter().flat_map(|tiles_y| tiles_y.iter()) {
                     positions.push([tile.vertex.x(), tile.vertex.w(), 0.0]);
@@ -165,9 +164,10 @@ impl AssetLoader<Map> for TiledMapLoader {
                     positions.push([tile.vertex.z(), tile.vertex.w(), 0.0]);
                     normals.push([0.0, 0.0, 1.0]);
                     uvs.push([tile.uv.z(), tile.uv.w()]);
-
-                    // TODO: Build out indices
                 }
+
+                // TODO: Pulled from the quad mesh, but they might not be 100% correct..
+                let indices = vec![0, 2, 1, 0, 3, 2];
 
                 let mesh = Mesh {
                     primitive_topology: PrimitiveTopology::TriangleList,
