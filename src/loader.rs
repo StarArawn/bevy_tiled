@@ -1,5 +1,12 @@
 use anyhow::Result;
-use bevy::asset::AssetLoader;
+use bevy::{
+    prelude::Mesh,
+    asset::AssetLoader,
+    render::{
+        mesh::VertexAttribute,
+        pipeline::PrimitiveTopology,
+    },
+};
 use std::{io::BufReader, path::Path};
 use crate::{Layer, map::{Chunk, Map}, Tile};
 use glam::{Vec4, Vec2};
@@ -132,6 +139,47 @@ impl AssetLoader<Map> for TiledMapLoader {
                 chunks,
             };
             layers.push(layer);
+        }
+
+        let mut meshes = Vec::new();
+        for layer in layers.iter() {
+            for chunk in layer.chunks.iter().flat_map(|chunks_y| chunks_y.iter()) {
+                let mut positions = Vec::new();
+                let mut normals = Vec::new();
+                let mut uvs = Vec::new();
+                let mut indices = Vec::new();
+                
+                for tile in chunk.tiles.iter().flat_map(|tiles_y| tiles_y.iter()) {
+                    positions.push([tile.vertex.x(), tile.vertex.w(), 0.0]);
+                    normals.push([0.0, 0.0, 1.0]);
+                    uvs.push([tile.uv.x(), tile.uv.w()]);
+
+                    positions.push([tile.vertex.z(), tile.vertex.y(), 0.0]);
+                    normals.push([0.0, 0.0, 1.0]);
+                    uvs.push([tile.uv.z(), tile.uv.y()]);
+
+                    positions.push([tile.vertex.x(), tile.vertex.y(), 0.0]);
+                    normals.push([0.0, 0.0, 1.0]);
+                    uvs.push([tile.uv.x(), tile.uv.y()]);
+
+                    positions.push([tile.vertex.z(), tile.vertex.w(), 0.0]);
+                    normals.push([0.0, 0.0, 1.0]);
+                    uvs.push([tile.uv.z(), tile.uv.w()]);
+
+                    // TODO: Build out indices
+                }
+
+                let mesh = Mesh {
+                    primitive_topology: PrimitiveTopology::TriangleList,
+                    attributes: vec![
+                        VertexAttribute::position(positions),
+                        VertexAttribute::normal(normals),
+                        VertexAttribute::uv(uvs),
+                    ],
+                    indices: Some(indices),
+                };
+                meshes.push(mesh);
+            }
         }
 
         let map = Map {
