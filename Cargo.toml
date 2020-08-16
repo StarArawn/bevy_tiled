@@ -1,0 +1,13 @@
+[package]
+name = "bevy_tiled"
+version = "0.1.0"
+authors = ["John Mitchell"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+bevy = { git="https://github.com/bevyengine/bevy", rev="7db48212871cf244127f45855d2c1bb6ef94c183" }
+glam = "0.9"
+tiled = "0.9"
