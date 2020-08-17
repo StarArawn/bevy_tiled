@@ -5,6 +5,8 @@ mod map;
 pub use map::*;
 mod pipeline;
 pub use pipeline::*;
+mod tile_map;
+pub use tile_map::*;
 
 /// Adds support for GLTF file loading to Apps
 #[derive(Default)]

@@ -7,9 +7,10 @@ use bevy::{
             RasterizationStateDescriptor, StencilStateFaceDescriptor,
         },
         shader::{ShaderStage, ShaderStages},
-        texture::TextureFormat, render_graph::{RenderGraph},
+        texture::TextureFormat, render_graph::{RenderGraph, RenderResourcesNode, base},
     },
 };
+use crate::TileMapChunk;
 
 pub const TILE_MAP_PIPELINE_HANDLE: Handle<PipelineDescriptor> =
     Handle::from_u128(35719948083365670583462682848847416493);
@@ -59,12 +60,21 @@ pub fn build_tile_map_pipeline(shaders: &mut Assets<Shader>) -> PipelineDescript
     }
 }
 
+pub mod node {
+    pub const TILE_MAP_CHUNK: &'static str = "tile_map_chunk";
+}
+
+
 pub trait TileMapRenderGraphBuilder {
     fn add_tile_map_graph(&mut self, resources: &Resources) -> &mut Self;
 }
 
 impl TileMapRenderGraphBuilder for RenderGraph {
     fn add_tile_map_graph(&mut self, resources: &Resources) -> &mut Self {
+        self.add_system_node(node::TILE_MAP_CHUNK, RenderResourcesNode::<TileMapChunk>::new(true));
+        self.add_node_edge(node::TILE_MAP_CHUNK, base::node::MAIN_PASS)
+            .unwrap();
+
         let mut pipelines = resources.get_mut::<Assets<PipelineDescriptor>>().unwrap();
         let mut shaders = resources.get_mut::<Assets<Shader>>().unwrap();
         pipelines.set(TILE_MAP_PIPELINE_HANDLE, build_tile_map_pipeline(&mut shaders));

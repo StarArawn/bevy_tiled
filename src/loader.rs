@@ -16,14 +16,16 @@ pub struct TiledMapLoader;
 
 impl TiledMapLoader {
     fn remove_tile_flags(tile: u32) -> u32 {
-        let tile = tile & !FLIPPED_HORIZONTALLY_FLAG;
-        let tile = tile & !FLIPPED_VERTICALLY_FLAG;
+        let tile = tile & !ALL_FLIP_FLAGS;
         tile
     }
 }
 
 const FLIPPED_HORIZONTALLY_FLAG: u32 = 0x80000000;
 const FLIPPED_VERTICALLY_FLAG: u32 = 0x40000000;
+const FLIPPED_DIAGONALLY_FLAG: u32 = 0x20000000;
+const ALL_FLIP_FLAGS: u32 =
+    FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG;
 
 impl AssetLoader<Map> for TiledMapLoader {
     fn from_bytes(&self, _asset_path: &Path, bytes: Vec<u8>) -> Result<Map> {
@@ -31,8 +33,8 @@ impl AssetLoader<Map> for TiledMapLoader {
 
         let mut layers = Vec::new();
 
-        let chunk_size_x = (map.width as usize / 32).max(1);
-        let chunk_size_y = (map.height as usize / 32).max(1);
+        let chunk_size_x = (map.width as f32 / 32.0).ceil().max(1.0) as usize;
+        let chunk_size_y = (map.height as f32 / 32.0).ceil().max(1.0) as usize;
         let tile_size = Vec2::new(map.tile_width as f32, map.tile_height as f32);
 
         // TODO: Support more tilesets..
@@ -58,8 +60,8 @@ impl AssetLoader<Map> for TiledMapLoader {
                     for tile_x in 0..32 {
                         let mut tiles_y = Vec::new();
                         for tile_y in 0..32 {
-                            let lookup_x = chunk_x + tile_x;
-                            let lookup_y = chunk_y + tile_y;
+                            let lookup_x = (chunk_x * 32) + tile_x;
+                            let lookup_y = (chunk_y * 32) + tile_y;
                         
                             // Get chunk tile.
                             let chunk_tile = if 
@@ -75,13 +77,9 @@ impl AssetLoader<Map> for TiledMapLoader {
                                 // };
 
                                 let map_tile = layer.tiles[lookup_y][lookup_x];
-                                
+
                                 let tile = map_tile.gid;
                                 
-                                // Get and remove bit flags..
-                                let is_horz_flip: bool = (tile & FLIPPED_HORIZONTALLY_FLAG) != 0;
-                                let is_vert_flip: bool = (tile & FLIPPED_VERTICALLY_FLAG) != 0;
-
                                 let tile = (Self::remove_tile_flags(tile) as f32) - 1.0; // tiled counts from 1
 
                                 // This calculation is much simpler we only care about getting the remainder
@@ -94,7 +92,7 @@ impl AssetLoader<Map> for TiledMapLoader {
                                 // Example2: tile 10 / 28 columns = 0.3571 rounded down to 0 * 16 tile_height = 0 Y
                                 // which is the 1st row in the sprite sheet.
                                 let sprite_sheet_y: f32 = (tile / columns).floor() * tile_height;
-            
+        
                                 // Calculate positions:
                                 let start_x: f32 = tile_width * (lookup_x as f32);
                                 let end_x: f32 = tile_width * ((lookup_x as f32) + 1.0);
@@ -107,12 +105,12 @@ impl AssetLoader<Map> for TiledMapLoader {
                                 let mut start_v: f32 = sprite_sheet_y / texture_height;
                                 let mut end_v: f32 = (sprite_sheet_y + tile_height) / texture_height;
             
-                                if is_horz_flip {
+                                if map_tile.flip_h {
                                     let temp_startu = start_u;
                                     start_u = end_u;
                                     end_u = temp_startu;
                                 }
-                                if is_vert_flip {
+                                if map_tile.flip_v {
                                     let temp_startv = start_v;
                                     start_v = end_v;
                                     end_v = temp_startv;
@@ -140,6 +138,7 @@ impl AssetLoader<Map> for TiledMapLoader {
                     }
 
                     let chunk = Chunk {
+                        position: Vec2::new(chunk_x as f32, chunk_y as f32),
                         tiles,
                     };
                     chunks_y.push(chunk);
@@ -148,58 +147,67 @@ impl AssetLoader<Map> for TiledMapLoader {
             }
 
             let layer = Layer {
+                tile_size: Vec2::new(tile_width, tile_height),
                 chunks,
             };
             layers.push(layer);
         }
 
         let mut meshes = Vec::new();
-        for layer in layers.iter() {
-            for chunk in layer.chunks.iter().flat_map(|chunks_y| chunks_y.iter()) {
-                let mut positions = Vec::new();
-                let mut normals = Vec::new();
-                let mut uvs = Vec::new();
-                let mut indices = Vec::new();
-                
-                let mut i = 0;
-                for tile in chunk.tiles.iter().flat_map(|tiles_y| tiles_y.iter()) {
-                    // X, Y
-                    positions.push([tile.vertex.x(), tile.vertex.y(), 0.0]);
-                    normals.push([0.0, 0.0, 1.0]);
-                    uvs.push([tile.uv.x(), tile.uv.w()]);
+        for (layer_id, layer) in layers.iter().enumerate() {
+            for x in 0..layer.chunks.len() {
+                let chunk_x = &layer.chunks[x];
+                for y in 0..chunk_x.len() {
+                    let chunk = &chunk_x[y];
+                    
+                    let mut positions = Vec::new();
+                    let mut normals = Vec::new();
+                    let mut uvs = Vec::new();
+                    let mut indices = Vec::new();
+                    
+                    let mut i = 0;
+                    for tile in chunk.tiles.iter().flat_map(|tiles_y| tiles_y.iter()) {
+                        if tile.tile_id == 0 {
+                            continue;
+                        }
 
-                    // X, Y + 1
-                    positions.push([tile.vertex.x(), tile.vertex.w(), 0.0]);
-                    normals.push([0.0, 0.0, 1.0]);
-                    uvs.push([tile.uv.x(), tile.uv.y()]);     
+                        // X, Y
+                        positions.push([tile.vertex.x(), tile.vertex.y(), 0.0]);
+                        normals.push([0.0, 0.0, 1.0]);
+                        uvs.push([tile.uv.x(), tile.uv.w()]);
 
-                    // X + 1, Y + 1
-                    positions.push([tile.vertex.z(), tile.vertex.w(), 0.0]);
-                    normals.push([0.0, 0.0, 1.0]);
-                    uvs.push([tile.uv.z(), tile.uv.y()]);     
+                        // X, Y + 1
+                        positions.push([tile.vertex.x(), tile.vertex.w(), 0.0]);
+                        normals.push([0.0, 0.0, 1.0]);
+                        uvs.push([tile.uv.x(), tile.uv.y()]);     
 
-                    // X + 1, Y
-                    positions.push([tile.vertex.z(), tile.vertex.y(), 0.0]);
-                    normals.push([0.0, 0.0, 1.0]);
-                    uvs.push([tile.uv.z(), tile.uv.w()]);    
-                
-                    let mut new_indices = vec![i + 0, i + 2, i + 1, i + 0, i + 3, i + 2];
-                    indices.append(&mut new_indices);
+                        // X + 1, Y + 1
+                        positions.push([tile.vertex.z(), tile.vertex.w(), 0.0]);
+                        normals.push([0.0, 0.0, 1.0]);
+                        uvs.push([tile.uv.z(), tile.uv.y()]);     
 
-                    i += 4;
+                        // X + 1, Y
+                        positions.push([tile.vertex.z(), tile.vertex.y(), 0.0]);
+                        normals.push([0.0, 0.0, 1.0]);
+                        uvs.push([tile.uv.z(), tile.uv.w()]);    
+                    
+                        let mut new_indices = vec![i + 0, i + 2, i + 1, i + 0, i + 3, i + 2];
+                        indices.append(&mut new_indices);
+
+                        i += 4;
+                    }
+
+                    let mesh = Mesh {
+                        primitive_topology: PrimitiveTopology::TriangleList,
+                        attributes: vec![
+                            VertexAttribute::position(positions),
+                            VertexAttribute::normal(normals),
+                            VertexAttribute::uv(uvs),
+                        ],
+                        indices: Some(indices),
+                    };
+                    meshes.push((layer_id as u32, mesh));
                 }
-
-
-                let mesh = Mesh {
-                    primitive_topology: PrimitiveTopology::TriangleList,
-                    attributes: vec![
-                        VertexAttribute::position(positions),
-                        VertexAttribute::normal(normals),
-                        VertexAttribute::uv(uvs),
-                    ],
-                    indices: Some(indices),
-                };
-                meshes.push(mesh);
             }
         }
 
