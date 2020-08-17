@@ -45,6 +45,9 @@ impl AssetLoader<Map> for TiledMapLoader {
         let columns = (texture_width / tile_width).floor();
 
         for layer in map.layers.iter() {
+            if !layer.visible {
+                continue;
+            }
             let mut chunks = Vec::new();
             // 32 x 32 tile chunk sizes
             for chunk_x in 0..chunk_size_x {
@@ -63,15 +66,24 @@ impl AssetLoader<Map> for TiledMapLoader {
                                 lookup_x < map.width as usize &&
                                 lookup_y < map.height as usize {
 
+                                // New Tiled crate code:
+                                // let map_tile = match &layer.tiles {
+                                //     tiled::LayerData::Finite(tiles) => { 
+                                //         &tiles[lookup_y][lookup_x]
+                                //     },
+                                //     _ => panic!("Infinte maps not supported"),
+                                // };
+
                                 let map_tile = layer.tiles[lookup_y][lookup_x];
-
+                                
                                 let tile = map_tile.gid;
-
+                                
                                 // Get and remove bit flags..
                                 let is_horz_flip: bool = (tile & FLIPPED_HORIZONTALLY_FLAG) != 0;
                                 let is_vert_flip: bool = (tile & FLIPPED_VERTICALLY_FLAG) != 0;
-            
+
                                 let tile = (Self::remove_tile_flags(tile) as f32) - 1.0; // tiled counts from 1
+
                                 // This calculation is much simpler we only care about getting the remainder
                                 // and multiplying that by the tile width.
                                 let sprite_sheet_x: f32 = (tile % columns * tile_width).floor();
