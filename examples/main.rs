@@ -11,9 +11,14 @@ fn main() {
 fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    commands.spawn(bevy_tiled::map::TiledMapComponents {
-        map_asset: asset_server.load("assets/map.tmx").unwrap(),
-        ..Default::default()
-    });
+    let texture_handle = asset_server.load("assets/buch-outdoor.png").unwrap();
+    commands
+        .spawn(bevy_tiled::TiledMapComponents {
+            map_asset: asset_server.load("assets/map.tmx").unwrap(),
+            material: materials.add(texture_handle.into()),
+            ..Default::default()
+        })
+        .spawn(Camera2dComponents::default());
 }

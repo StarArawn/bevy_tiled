@@ -1,8 +1,10 @@
-use bevy::prelude::*;
+use bevy::{render::render_graph::RenderGraph, prelude::*};
 
 mod loader;
-pub mod map;
+mod map;
 pub use map::*;
+mod pipeline;
+pub use pipeline::*;
 
 /// Adds support for GLTF file loading to Apps
 #[derive(Default)]
@@ -12,6 +14,12 @@ impl Plugin for TiledMapPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app
             .add_asset::<map::Map>()
-            .add_asset_loader::<map::Map, loader::TiledMapLoader>();
+            .add_asset_loader::<map::Map, loader::TiledMapLoader>()
+            .add_system(process_loaded_tile_maps.system());
+        
+        let resources = app.resources();
+        let mut render_graph = resources.get_mut::<RenderGraph>().unwrap();
+        render_graph.add_tile_map_graph(resources);
+
     }
 }
