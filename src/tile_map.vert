@@ -16,6 +16,6 @@ layout(set = 2, binding = 0) uniform Transform {
 
 void main() {
     v_Uv = Vertex_Uv;
-    vec3 position = Vertex_Position;
+    vec3 position = Vertex_Position * vec3(5.0, 5.0, 1.0);
     gl_Position = ViewProj * Model * vec4(position, 1.0);
 }

@@ -149,25 +149,32 @@ impl AssetLoader<Map> for TiledMapLoader {
                 let mut uvs = Vec::new();
                 let mut indices = Vec::new();
                 
+                let mut i = 0;
                 for tile in chunk.tiles.iter().flat_map(|tiles_y| tiles_y.iter()) {
+                    // X, Y + 1
                     positions.push([tile.vertex.x(), tile.vertex.w(), 0.0]);
-                    normals.push([0.0, 0.0, 1.0]);
+                    normals.push([0.0, 0.0, 1.0]); 
                     uvs.push([tile.uv.x(), tile.uv.w()]);
-
+                
+                    // X, Y
+                    positions.push([tile.vertex.x(), tile.vertex.y(), 0.0]);
+                    normals.push([0.0, 0.0, 1.0]);
+                    uvs.push([tile.uv.x(), tile.uv.y()]);
+                
+                    // X + 1, Y
                     positions.push([tile.vertex.z(), tile.vertex.y(), 0.0]);
                     normals.push([0.0, 0.0, 1.0]);
                     uvs.push([tile.uv.z(), tile.uv.y()]);
 
-                    positions.push([tile.vertex.x(), tile.vertex.y(), 0.0]);
-                    normals.push([0.0, 0.0, 1.0]);
-                    uvs.push([tile.uv.x(), tile.uv.y()]);
-
+                    // X + 1, Y + 1
                     positions.push([tile.vertex.z(), tile.vertex.w(), 0.0]);
                     normals.push([0.0, 0.0, 1.0]);
-                    uvs.push([tile.uv.z(), tile.uv.w()]);
-
-                    let mut new_indices = vec![0, 1, 2, 0, 2, 3];
+                    uvs.push([tile.uv.z(), tile.uv.w()]);               
+                
+                    let mut new_indices = vec![i + 0, i + 1, i + 2, i + 0, i + 2, i + 3];
                     indices.append(&mut new_indices);
+
+                    i += 4;
                 }
 
 
