@@ -1,6 +1,0 @@
-   Compiling bevy_tiled v0.1.0 (/Users/jmitchell/rust/bevy_tiled)
-    Finished dev [unoptimized + debuginfo] target(s) in 10.79s
-     Running `target/debug/examples/main`
-[examples/main.rs:26] "spawning succesful!" = "spawning succesful!"
-[src/map.rs:176] chunk_mesh_list.len() = 2
-[src/map.rs:176] chunk_mesh_list.len() = 2
