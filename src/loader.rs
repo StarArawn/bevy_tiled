@@ -33,8 +33,11 @@ impl AssetLoader<Map> for TiledMapLoader {
 
         let mut layers = Vec::new();
 
-        let chunk_size_x = (map.width as f32 / 32.0).ceil().max(1.0) as usize;
-        let chunk_size_y = (map.height as f32 / 32.0).ceil().max(1.0) as usize;
+        let target_chunk_x = 32;
+        let target_chunk_y = 32;
+
+        let chunk_size_x = (map.width as f32 / target_chunk_x as f32).ceil().max(1.0) as usize;
+        let chunk_size_y = (map.height as f32 / target_chunk_y as f32).ceil().max(1.0) as usize;
         let tile_size = Vec2::new(map.tile_width as f32, map.tile_height as f32);
 
         // TODO: Support more tilesets..
@@ -57,20 +60,19 @@ impl AssetLoader<Map> for TiledMapLoader {
                 for chunk_y in 0..chunk_size_y {
                     let mut tiles = Vec::new();
 
-                    for tile_x in 0..32 {
+                    for tile_x in 0..target_chunk_x {
                         let mut tiles_y = Vec::new();
-                        for tile_y in 0..32 {
-                            let lookup_x = (chunk_x * 32) + tile_x;
-                            let lookup_y = (chunk_y * 32) + tile_y;
-                        
-                            // Get chunk tile.
-                            let chunk_tile = if 
-                                lookup_x < map.width as usize &&
-                                lookup_y < map.height as usize {
+                        for tile_y in 0..target_chunk_y {
+                            let lookup_x = (chunk_x * target_chunk_x) + tile_x;
+                            let lookup_y = (chunk_y * target_chunk_y) + tile_y;
 
+                            // Get chunk tile.
+                            let chunk_tile = if lookup_x < map.width as usize
+                                && lookup_y < map.height as usize
+                            {
                                 // New Tiled crate code:
                                 // let map_tile = match &layer.tiles {
-                                //     tiled::LayerData::Finite(tiles) => { 
+                                //     tiled::LayerData::Finite(tiles) => {
                                 //         &tiles[lookup_y][lookup_x]
                                 //     },
                                 //     _ => panic!("Infinte maps not supported"),
@@ -92,12 +94,41 @@ impl AssetLoader<Map> for TiledMapLoader {
                                 // Example2: tile 10 / 28 columns = 0.3571 rounded down to 0 * 16 tile_height = 0 Y
                                 // which is the 1st row in the sprite sheet.
                                 let sprite_sheet_y: f32 = (tile / columns).floor() * tile_height;
-        
-                                // Calculate positions:
-                                let start_x: f32 = tile_width * (lookup_x as f32);
-                                let end_x: f32 = tile_width * ((lookup_x as f32) + 1.0);
-                                let start_y: f32 = tile_height * -(lookup_y as f32);
-                                let end_y: f32 = tile_height * (-(lookup_y as f32) + 1.0);
+
+                                // Calculate positions
+                                let (start_x, end_x, start_y, end_y) = match map.orientation {
+                                    tiled::Orientation::Orthogonal => {
+                                        let start_x: f32 = tile_width * (lookup_x as f32);
+                                        let end_x: f32 = tile_width * ((lookup_x as f32) + 1.0);
+                                        let start_y: f32 = tile_height * -(lookup_y as f32);
+                                        let end_y: f32 = tile_height * (-(lookup_y as f32) + 1.0);
+                                        (start_x, end_x, start_y, end_y)
+                                    }
+                                    tiled::Orientation::Isometric => {
+                                        let start_x: f32 = (tile_width * lookup_x as f32 / 2.0)
+                                            + ((map.height as f32 * tile_width) / 2.0)
+                                            - ((lookup_y as f32 * tile_width) / 2.0);
+                                        let end_x: f32 = (tile_width * (lookup_x as f32 + 2.0)
+                                            / 2.0)
+                                            + ((map.height as f32 * tile_width) / 2.0)
+                                            - (((lookup_y as f32) * tile_width) / 2.0);
+                                        let start_y: f32 =
+                                            (((map.height as f32 - lookup_y as f32 - 1.0)
+                                                * tile_height)
+                                                / 2.0)
+                                                + ((map.width as f32 * tile_height) / 2.0)
+                                                - ((lookup_x as f32 * tile_height) / 2.0);
+                                        let end_y: f32 =
+                                            ((((map.height as f32 - lookup_y as f32 - 1.0) + 2.0)
+                                                * tile_height)
+                                                / 2.0)
+                                                + ((map.width as f32 * tile_height) / 2.0)
+                                                - (((lookup_x as f32) * tile_height) / 2.0);
+
+                                        (start_x, end_x, start_y, end_y)
+                                    }
+                                    _ => panic!("Unsupported orientation {:?}", map.orientation),
+                                };
 
                                 // Calculate UV:
                                 let mut start_u: f32 = sprite_sheet_x / texture_width;
