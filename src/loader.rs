@@ -1,15 +1,15 @@
+use crate::{
+    map::{Chunk, Map},
+    Layer, Tile,
+};
 use anyhow::Result;
 use bevy::{
-    prelude::Mesh,
     asset::AssetLoader,
-    render::{
-        mesh::VertexAttribute,
-        pipeline::PrimitiveTopology,
-    },
+    prelude::Mesh,
+    render::{mesh::VertexAttribute, pipeline::PrimitiveTopology},
 };
+use glam::{Vec2, Vec4};
 use std::{io::BufReader, path::Path};
-use crate::{Layer, map::{Chunk, Map}, Tile};
-use glam::{Vec4, Vec2};
 
 #[derive(Default)]
 pub struct TiledMapLoader;
@@ -79,13 +79,13 @@ impl AssetLoader<Map> for TiledMapLoader {
                                 let map_tile = layer.tiles[lookup_y][lookup_x];
 
                                 let tile = map_tile.gid;
-                                
+
                                 let tile = (Self::remove_tile_flags(tile) as f32) - 1.0; // tiled counts from 1
 
                                 // This calculation is much simpler we only care about getting the remainder
                                 // and multiplying that by the tile width.
                                 let sprite_sheet_x: f32 = (tile % columns * tile_width).floor();
-            
+
                                 // Calculation here is (tile / columns).round_down * tile_height
                                 // Example: tile 30 / 28 columns = 1.0714 rounded down to 1 * 16 tile_height = 16 Y
                                 // which is the 2nd row in the sprite sheet.
@@ -103,8 +103,9 @@ impl AssetLoader<Map> for TiledMapLoader {
                                 let mut start_u: f32 = sprite_sheet_x / texture_width;
                                 let mut end_u: f32 = (sprite_sheet_x + tile_width) / texture_width;
                                 let mut start_v: f32 = sprite_sheet_y / texture_height;
-                                let mut end_v: f32 = (sprite_sheet_y + tile_height) / texture_height;
-            
+                                let mut end_v: f32 =
+                                    (sprite_sheet_y + tile_height) / texture_height;
+
                                 if map_tile.flip_h {
                                     let temp_startu = start_u;
                                     start_u = end_u;
@@ -115,7 +116,7 @@ impl AssetLoader<Map> for TiledMapLoader {
                                     start_v = end_v;
                                     end_v = temp_startv;
                                 }
-            
+
                                 Tile {
                                     tile_id: map_tile.gid,
                                     pos: Vec2::new(tile_x as f32, tile_y as f32),
@@ -159,12 +160,12 @@ impl AssetLoader<Map> for TiledMapLoader {
                 let chunk_x = &layer.chunks[x];
                 for y in 0..chunk_x.len() {
                     let chunk = &chunk_x[y];
-                    
+
                     let mut positions = Vec::new();
                     let mut normals = Vec::new();
                     let mut uvs = Vec::new();
                     let mut indices = Vec::new();
-                    
+
                     let mut i = 0;
                     for tile in chunk.tiles.iter().flat_map(|tiles_y| tiles_y.iter()) {
                         if tile.tile_id == 0 {
@@ -179,18 +180,18 @@ impl AssetLoader<Map> for TiledMapLoader {
                         // X, Y + 1
                         positions.push([tile.vertex.x(), tile.vertex.w(), 0.0]);
                         normals.push([0.0, 0.0, 1.0]);
-                        uvs.push([tile.uv.x(), tile.uv.y()]);     
+                        uvs.push([tile.uv.x(), tile.uv.y()]);
 
                         // X + 1, Y + 1
                         positions.push([tile.vertex.z(), tile.vertex.w(), 0.0]);
                         normals.push([0.0, 0.0, 1.0]);
-                        uvs.push([tile.uv.z(), tile.uv.y()]);     
+                        uvs.push([tile.uv.z(), tile.uv.y()]);
 
                         // X + 1, Y
                         positions.push([tile.vertex.z(), tile.vertex.y(), 0.0]);
                         normals.push([0.0, 0.0, 1.0]);
-                        uvs.push([tile.uv.z(), tile.uv.w()]);    
-                    
+                        uvs.push([tile.uv.z(), tile.uv.w()]);
+
                         let mut new_indices = vec![i + 0, i + 2, i + 1, i + 0, i + 3, i + 2];
                         indices.append(&mut new_indices);
 

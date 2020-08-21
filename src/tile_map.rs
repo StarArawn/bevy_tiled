@@ -1,7 +1,5 @@
 use bevy::core::Byteable;
-use bevy::render::{
-    renderer::{RenderResource, RenderResources},
-};
+use bevy::render::renderer::{RenderResource, RenderResources};
 
 #[repr(C)]
 #[derive(Default, RenderResources, RenderResource)]

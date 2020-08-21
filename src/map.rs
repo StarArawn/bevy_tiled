@@ -1,16 +1,14 @@
 use bevy::{
     prelude::*,
     render::{
-        pipeline::{
-            DynamicBinding, PipelineSpecialization, RenderPipeline,
-        },
+        pipeline::{DynamicBinding, PipelineSpecialization, RenderPipeline},
         render_graph::base::MainPass,
     },
 };
 
+use crate::{TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 use glam::{Vec2, Vec4};
 use std::collections::{HashMap, HashSet};
-use crate::{TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 
 #[derive(Debug)]
 pub struct Tile {
@@ -162,11 +160,12 @@ pub fn process_loaded_tile_maps(
 
             for (layer_id, _) in map.layers.iter().enumerate() {
                 // let mut mesh_list = mesh_list.iter_mut().filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32).drain(0..mesh_list.len()).collect::<Vec<_>>();
-                let chunk_mesh_list = mesh_list.iter().filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32).collect::<Vec<_>>();
-                
+                let chunk_mesh_list = mesh_list
+                    .iter()
+                    .filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32)
+                    .collect::<Vec<_>>();
 
                 for (_, mesh) in chunk_mesh_list.iter() {
-
                     // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
                     // Change this once it does.
 
