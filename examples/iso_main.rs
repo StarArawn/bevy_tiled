@@ -19,6 +19,7 @@ fn setup(
         .spawn(bevy_tiled::TiledMapComponents {
             map_asset: asset_server.load("assets/iso-map.tmx").unwrap(),
             material: materials.add(texture_handle.into()),
+            center: true,
             ..Default::default()
         })
         .spawn(Camera2dComponents::default());
