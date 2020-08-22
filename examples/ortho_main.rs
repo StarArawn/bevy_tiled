@@ -1,12 +1,12 @@
-use bevy::{render::camera::Camera, prelude::*};
+use bevy::{prelude::*, render::camera::Camera};
 
 fn main() {
     App::build()
-    .add_default_plugins()
-    .add_plugin(bevy_tiled::TiledMapPlugin)
-    .add_startup_system(setup.system())
-    .add_system(camera_movement.system())
-    .run();
+        .add_default_plugins()
+        .add_plugin(bevy_tiled::TiledMapPlugin)
+        .add_startup_system(setup.system())
+        .add_system(camera_movement.system())
+        .run();
 }
 
 fn setup(
@@ -14,11 +14,12 @@ fn setup(
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let texture_handle = asset_server.load("assets/buch-outdoor.png").unwrap();
+    let texture_handle = asset_server.load("assets/ortho.png").unwrap();
     commands
         .spawn(bevy_tiled::TiledMapComponents {
-            map_asset: asset_server.load("assets/map.tmx").unwrap(),
+            map_asset: asset_server.load("assets/ortho-map.tmx").unwrap(),
             material: materials.add(texture_handle.into()),
+            center: true,
             ..Default::default()
         })
         .spawn(Camera2dComponents::default());
@@ -36,7 +37,7 @@ fn camera_movement(
         }
 
         if keyboard_input.pressed(KeyCode::D) {
-            direction +=  Vec3::new(1.0, 0.0, 0.0);
+            direction += Vec3::new(1.0, 0.0, 0.0);
         }
 
         if keyboard_input.pressed(KeyCode::W) {
@@ -44,7 +45,7 @@ fn camera_movement(
         }
 
         if keyboard_input.pressed(KeyCode::S) {
-            direction -=  Vec3::new(0.0, 1.0, 0.0);
+            direction -= Vec3::new(0.0, 1.0, 0.0);
         }
 
         translation.0 += time.delta_seconds * direction * 1000.0;

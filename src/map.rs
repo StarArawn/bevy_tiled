@@ -1,16 +1,14 @@
 use bevy::{
     prelude::*,
     render::{
-        pipeline::{
-            DynamicBinding, PipelineSpecialization, RenderPipeline,
-        },
+        pipeline::{DynamicBinding, PipelineSpecialization, RenderPipeline},
         render_graph::base::MainPass,
     },
 };
 
+use crate::{TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 use glam::{Vec2, Vec4};
 use std::collections::{HashMap, HashSet};
-use crate::{TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 
 #[derive(Debug)]
 pub struct Tile {
@@ -41,11 +39,39 @@ pub struct Map {
     pub tile_size: Vec2,
 }
 
+impl Map {
+    pub fn center(&self) -> Translation {
+        let tile_size = Vec2::new(self.map.tile_width as f32, self.map.tile_height as f32);
+        let width = self.map.width as f32;
+        let height = self.map.height as f32;
+        match self.map.orientation {
+            tiled::Orientation::Orthogonal => Translation::new(
+                -tile_size.x() * width * 2.0,
+                tile_size.y() * height * 2.0,
+                0.0,
+            ),
+            tiled::Orientation::Isometric => Translation::new(
+                ((tile_size.x() * (width * 2.0) / 2.0) + (height * tile_size.x() / 2.0)
+                    - (height / 4.0 * tile_size.x() / 2.0))
+                    * -2.0,
+                (((height - (height / 4.0) - 1.0) * tile_size.y() / 2.0)
+                    + (width * tile_size.y() / 2.0)
+                    - (width / 4.0 * tile_size.y() / 2.0))
+                    * -4.0,
+                0.0,
+            ),
+
+            _ => panic!("Unsupported orientation {:?}", self.map.orientation),
+        }
+    }
+}
+
 /// A bundle of tiled map entities.
 #[derive(Bundle)]
 pub struct TiledMapComponents {
     pub map_asset: Handle<Map>,
     pub material: Handle<ColorMaterial>,
+    pub center: bool,
 }
 
 impl Default for TiledMapComponents {
@@ -53,6 +79,7 @@ impl Default for TiledMapComponents {
         Self {
             map_asset: Handle::default(),
             material: Handle::default(),
+            center: false,
         }
     }
 }
@@ -119,7 +146,7 @@ pub fn process_loaded_tile_maps(
     map_events: Res<Events<AssetEvent<Map>>>,
     mut maps: ResMut<Assets<Map>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(Entity, &Handle<Map>, &Handle<ColorMaterial>)>,
+    mut query: Query<(Entity, &bool, &Handle<Map>, &Handle<ColorMaterial>)>,
 ) {
     let mut changed_maps = HashSet::<Handle<Map>>::new();
     for event in state.map_event_reader.iter(&map_events) {
@@ -155,18 +182,26 @@ pub fn process_loaded_tile_maps(
         }
     }
 
-    for (_, map_handle, material_handle) in &mut query.iter() {
+    for (_, center, map_handle, material_handle) in &mut query.iter() {
         if new_meshes.contains_key(map_handle) {
             let map = maps.get(map_handle).unwrap();
+
+            let translation = if *center {
+                map.center()
+            } else {
+                Translation::default()
+            };
+
             let mesh_list = new_meshes.get_mut(map_handle).unwrap();
 
             for (layer_id, _) in map.layers.iter().enumerate() {
                 // let mut mesh_list = mesh_list.iter_mut().filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32).drain(0..mesh_list.len()).collect::<Vec<_>>();
-                let chunk_mesh_list = mesh_list.iter().filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32).collect::<Vec<_>>();
-                
+                let chunk_mesh_list = mesh_list
+                    .iter()
+                    .filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32)
+                    .collect::<Vec<_>>();
 
                 for (_, mesh) in chunk_mesh_list.iter() {
-
                     // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
                     // Change this once it does.
 
@@ -178,6 +213,7 @@ pub fn process_loaded_tile_maps(
                         },
                         material: material_handle.clone(),
                         mesh: mesh.clone(),
+                        translation: translation.clone(),
                         ..Default::default()
                     });
                 }
