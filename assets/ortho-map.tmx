@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-down" width="45" height="31" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="37">
  <tileset firstgid="1" name="outdoor" tilewidth="16" tileheight="16" tilecount="288" columns="24">
-  <image source="buch-outdoor.png" width="384" height="192"/>
+  <image source="ortho.png" width="384" height="192"/>
   <terraintypes>
    <terrain name="Grass" tile="150"/>
    <terrain name="Dirt" tile="100"/>
