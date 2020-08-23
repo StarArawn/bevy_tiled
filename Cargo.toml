@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0"
-bevy = { git="https://github.com/bevyengine/bevy", rev="7db48212871cf244127f45855d2c1bb6ef94c183" }
+bevy = "0.1.3"
 glam = "0.9"
 tiled = "0.9"
 # tiled = { git = "https://github.com/mattyhall/rs-tiled" }
