@@ -9,16 +9,10 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    let texture_handle = asset_server.load("assets/ortho.png").unwrap();
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(bevy_tiled::TiledMapComponents {
             map_asset: asset_server.load("assets/ortho-map.tmx").unwrap(),
-            material: materials.add(texture_handle.into()),
             center: true,
             ..Default::default()
         })
