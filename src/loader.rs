@@ -29,7 +29,7 @@ const ALL_FLIP_FLAGS: u32 =
 
 impl AssetLoader<Map> for TiledMapLoader {
     fn from_bytes(&self, asset_path: &Path, bytes: Vec<u8>) -> Result<Map> {
-        let map = tiled::parse(BufReader::new(bytes.as_slice())).unwrap();
+        let map = tiled::parse_with_path(BufReader::new(bytes.as_slice()), asset_path).unwrap();
 
         let mut layers = Vec::new();
 
@@ -105,39 +105,39 @@ impl AssetLoader<Map> for TiledMapLoader {
                                     // Calculate positions
                                     let (start_x, end_x, start_y, end_y) = match map.orientation {
                                         tiled::Orientation::Orthogonal => {
-                                            let start = map_2d_to_ortho(
+                                            let center = Map::project_ortho(
                                                 Vec2::new(lookup_x as f32, lookup_y as f32),
                                                 tile_width,
                                                 tile_height,
-                                                0.0,
                                             );
 
-                                            let end = map_2d_to_ortho(
-                                                Vec2::new(lookup_x as f32, lookup_y as f32),
-                                                tile_width,
-                                                tile_height,
-                                                1.0,
+                                            let start = Vec2::new(
+                                                center.x() - tile_width / 2.0,
+                                                center.y() - tile_height / 2.0,
+                                            );
+
+                                            let end = Vec2::new(
+                                                center.x() + tile_width / 2.0,
+                                                center.y() + tile_height / 2.0,
                                             );
 
                                             (start.x(), end.x(), start.y(), end.y())
                                         }
                                         tiled::Orientation::Isometric => {
-                                            let start = map_2d_to_iso(
+                                            let center = Map::project_iso(
                                                 Vec2::new(lookup_x as f32, lookup_y as f32),
-                                                map.width as f32,
-                                                map.height as f32,
                                                 tile_width,
                                                 tile_height,
-                                                0.0,
                                             );
 
-                                            let end = map_2d_to_iso(
-                                                Vec2::new(lookup_x as f32, lookup_y as f32),
-                                                map.width as f32,
-                                                map.height as f32,
-                                                tile_width,
-                                                tile_height,
-                                                2.0,
+                                            let start = Vec2::new(
+                                                center.x() - tile_width / 2.0,
+                                                center.y() - tile_height / 2.0,
+                                            );
+
+                                            let end = Vec2::new(
+                                                center.x() + tile_width / 2.0,
+                                                center.y() + tile_height / 2.0,
                                             );
 
                                             (start.x(), end.x(), start.y(), end.y())
@@ -285,26 +285,4 @@ impl AssetLoader<Map> for TiledMapLoader {
         static EXTENSIONS: &[&str] = &["tmx"];
         EXTENSIONS
     }
-}
-
-fn map_2d_to_ortho(pos: Vec2, tile_width: f32, tile_height: f32, offset: f32) -> Vec2 {
-    let x = tile_width * (pos.x() + offset);
-    let y = tile_height * (-(pos.y()) + offset);
-    Vec2::new(x, y)
-}
-
-fn map_2d_to_iso(
-    pos: Vec2,
-    width: f32,
-    height: f32,
-    tile_width: f32,
-    tile_height: f32,
-    offset: f32,
-) -> Vec2 {
-    let x = (tile_width * (pos.x() as f32 + offset) / 2.0) + (height as f32 * tile_width / 2.0)
-        - (pos.y() as f32 * tile_width / 2.0);
-    let y = ((height as f32 - pos.y() as f32 + offset - 1.0) * tile_height / 2.0)
-        + (width as f32 * tile_height / 2.0)
-        - (pos.x() as f32 * tile_height / 2.0);
-    Vec2::new(x, y)
 }
