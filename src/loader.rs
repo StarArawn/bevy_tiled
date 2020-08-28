@@ -29,7 +29,7 @@ const ALL_FLIP_FLAGS: u32 =
 
 impl AssetLoader<Map> for TiledMapLoader {
     fn from_bytes(&self, asset_path: &Path, bytes: Vec<u8>) -> Result<Map> {
-        let map = tiled::parse(BufReader::new(bytes.as_slice())).unwrap();
+        let map = tiled::parse_with_path(BufReader::new(bytes.as_slice()), asset_path).unwrap();
 
         let mut layers = Vec::new();
 
