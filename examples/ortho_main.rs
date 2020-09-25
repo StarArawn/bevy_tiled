@@ -22,9 +22,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn camera_movement(
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&Camera, &mut Translation)>,
+    mut query: Query<(&Camera, &mut Transform)>,
 ) {
-    for (_, mut translation) in &mut query.iter() {
+    for (_, mut transform) in &mut query.iter() {
         let mut direction = Vec3::zero();
         if keyboard_input.pressed(KeyCode::A) {
             direction -= Vec3::new(1.0, 0.0, 0.0);
@@ -42,6 +42,7 @@ fn camera_movement(
             direction -= Vec3::new(0.0, 1.0, 0.0);
         }
 
-        translation.0 += time.delta_seconds * direction * 1000.0;
+        let translation = transform.translation();
+        transform.set_translation(translation + time.delta_seconds * direction * 1000.0);
     }
 }

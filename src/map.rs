@@ -7,7 +7,7 @@ use bevy::{
 };
 
 use crate::{TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
-use glam::{Vec2, Vec4};
+use glam::Vec2;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
@@ -69,17 +69,25 @@ impl Map {
         let y = ((-(pos.y()) / half_height) - (pos.x() / half_width)) / 2.0;
         Vec2::new(x.round(), y.round())
     }
-    pub fn center(&self, origin : &Translation) -> Translation {
+    pub fn center(&self, origin: Vec3) -> Vec3 {
         let tile_size = Vec2::new(self.map.tile_width as f32, self.map.tile_height as f32);
         let map_center = Vec2::new(self.map.width as f32 / 2.0, self.map.height as f32 / 2.0);
         match self.map.orientation {
             tiled::Orientation::Orthogonal => {
                 let center = Map::project_ortho(map_center, tile_size.x(), tile_size.y());
-                Translation::new(origin.x() - center.x() * 4.0, origin.y() - center.y() * 4.0, origin.z())
+                Vec3::new(
+                    origin.x() - center.x() * 4.0,
+                    origin.y() - center.y() * 4.0,
+                    origin.z(),
+                )
             }
             tiled::Orientation::Isometric => {
                 let center = Map::project_iso(map_center, tile_size.x(), tile_size.y());
-                Translation::new(origin.x() - center.x() * 4.0, origin.y()  -center.y() * 4.0, origin.z())
+                Vec3::new(
+                    origin.x() - center.x() * 4.0,
+                    origin.y() - center.y() * 4.0,
+                    origin.z(),
+                )
             }
 
             _ => panic!("Unsupported orientation {:?}", self.map.orientation),
@@ -93,7 +101,7 @@ pub struct TiledMapComponents {
     pub map_asset: Handle<Map>,
     pub materials: HashMap<u32, Handle<ColorMaterial>>,
     pub center: bool,
-    pub origin : Translation
+    pub origin: Transform,
 }
 
 impl Default for TiledMapComponents {
@@ -102,7 +110,7 @@ impl Default for TiledMapComponents {
             map_asset: Handle::default(),
             materials: HashMap::default(),
             center: false,
-            origin : Translation::new(0., 0., 0.)
+            origin: Default::default(), //Transform::from_translation(Vec3::new(0., 0., 0.))
         }
     }
 }
@@ -121,9 +129,7 @@ pub struct ChunkComponents {
     pub draw: Draw,
     pub mesh: Handle<Mesh>,
     pub transform: Transform,
-    pub translation: Translation,
-    pub rotation: Rotation,
-    pub scale: Scale,
+    pub global_transform: GlobalTransform,
 }
 
 impl Default for ChunkComponents {
@@ -156,9 +162,7 @@ impl Default for ChunkComponents {
                 },
             )]),
             transform: Default::default(),
-            translation: Default::default(),
-            rotation: Default::default(),
-            scale: Default::default(),
+            global_transform: Default::default(),
         }
     }
 }
@@ -176,7 +180,7 @@ pub fn process_loaded_tile_maps(
         &bool,
         &Handle<Map>,
         &mut HashMap<u32, Handle<ColorMaterial>>,
-        &Translation
+        &Transform,
     )>,
 ) {
     let mut changed_maps = HashSet::<Handle<Map>>::new();
@@ -213,7 +217,6 @@ pub fn process_loaded_tile_maps(
 
         for mesh in map.meshes.drain(0..map.meshes.len()) {
             let handle = meshes.add(mesh.2);
-
             if new_meshes.contains_key(changed_map) {
                 let mesh_list = new_meshes.get_mut(changed_map).unwrap();
                 mesh_list.push((mesh.0, mesh.1, handle));
@@ -230,9 +233,9 @@ pub fn process_loaded_tile_maps(
             let map = maps.get(map_handle).unwrap();
 
             let translation = if *center {
-                map.center(origin)
+                map.center(origin.translation())
             } else {
-                *origin
+                origin.translation()
             };
 
             let mesh_list = new_meshes.get_mut(map_handle).unwrap();
@@ -248,7 +251,6 @@ pub fn process_loaded_tile_maps(
                                 && *tileset_guid == tileset_layer.tileset_guid
                         })
                         .collect::<Vec<_>>();
-
                     for (_, _, mesh) in chunk_mesh_list.iter() {
                         // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
                         // Change this once it does.
@@ -261,7 +263,7 @@ pub fn process_loaded_tile_maps(
                             },
                             material: material_handle.clone(),
                             mesh: mesh.clone(),
-                            translation: translation.clone(),
+                            transform: Transform::from_translation(translation),
                             ..Default::default()
                         });
                     }

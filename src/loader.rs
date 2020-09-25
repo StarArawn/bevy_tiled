@@ -9,6 +9,7 @@ use bevy::{
     render::{mesh::VertexAttribute, pipeline::PrimitiveTopology},
 };
 use glam::{Vec2, Vec4};
+
 use std::{io::BufReader, path::Path};
 
 #[derive(Default)]
@@ -45,6 +46,7 @@ impl AssetLoader<Map> for TiledMapLoader {
                 continue;
             }
             let mut tileset_layers = Vec::new();
+
             for tileset in map.tilesets.iter() {
                 let tile_width = tileset.tile_width as f32;
                 let tile_height = tileset.tile_height as f32;
@@ -71,14 +73,12 @@ impl AssetLoader<Map> for TiledMapLoader {
                                     && lookup_y < map.height as usize
                                 {
                                     // New Tiled crate code:
-                                    // let map_tile = match &layer.tiles {
-                                    //     tiled::LayerData::Finite(tiles) => {
-                                    //         &tiles[lookup_y][lookup_x]
-                                    //     },
-                                    //     _ => panic!("Infinte maps not supported"),
-                                    // };
-
-                                    let map_tile = layer.tiles[lookup_y][lookup_x];
+                                    let map_tile = match &layer.tiles {
+                                        tiled::LayerData::Finite(tiles) => {
+                                            &tiles[lookup_y][lookup_x]
+                                        }
+                                        _ => panic!("Infinte maps not supported"),
+                                    };
 
                                     let tile = map_tile.gid;
                                     if tile < tileset.first_gid
