@@ -110,7 +110,7 @@ impl Default for TiledMapComponents {
             map_asset: Handle::default(),
             materials: HashMap::default(),
             center: false,
-            origin: Default::default(), //Transform::from_translation(Vec3::new(0., 0., 0.))
+            origin: Default::default(), 
         }
     }
 }
