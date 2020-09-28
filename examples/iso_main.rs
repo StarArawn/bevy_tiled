@@ -1,4 +1,5 @@
 use bevy::{prelude::*, render::camera::Camera};
+use bevy_tiled::TiledMapCenter;
 
 fn main() {
     App::build()
@@ -13,7 +14,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(bevy_tiled::TiledMapComponents {
             map_asset: asset_server.load("assets/iso-map.tmx").unwrap(),
-            center: true,
+            center: TiledMapCenter(true),
             ..Default::default()
         })
         .spawn(Camera2dComponents::default());
