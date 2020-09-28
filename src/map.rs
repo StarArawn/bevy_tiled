@@ -96,7 +96,7 @@ impl Map {
 }
 
 #[derive(Default)]
-pub struct TiledMapCenter(bool);
+pub struct TiledMapCenter(pub bool);
 
 /// A bundle of tiled map entities.
 #[derive(Bundle)]
