@@ -14,7 +14,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(bevy_tiled::TiledMapComponents {
             map_asset: asset_server.load("assets/ortho-map.tmx").unwrap(),
-            center: TiledMapCenter { 0: true },
+            center: TiledMapCenter(true),
             ..Default::default()
         })
         .spawn(Camera2dComponents::default());
