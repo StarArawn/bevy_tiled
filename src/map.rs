@@ -95,13 +95,16 @@ impl Map {
     }
 }
 
+#[derive(Default)]
+pub struct TiledMapCenter(bool);
+
 /// A bundle of tiled map entities.
 #[derive(Bundle)]
 pub struct TiledMapComponents {
     pub map_asset: Handle<Map>,
     pub materials: HashMap<u32, Handle<ColorMaterial>>,
-    pub center: bool,
     pub origin: Transform,
+    pub center: TiledMapCenter
 }
 
 impl Default for TiledMapComponents {
@@ -109,8 +112,8 @@ impl Default for TiledMapComponents {
         Self {
             map_asset: Handle::default(),
             materials: HashMap::default(),
-            center: false,
-            origin: Default::default(), 
+            center: TiledMapCenter::default(),
+            origin : Transform::default()
         }
     }
 }
@@ -177,7 +180,7 @@ pub fn process_loaded_tile_maps(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query: Query<(
         Entity,
-        &bool,
+        &TiledMapCenter,
         &Handle<Map>,
         &mut HashMap<u32, Handle<ColorMaterial>>,
         &Transform,
@@ -232,7 +235,7 @@ pub fn process_loaded_tile_maps(
         if new_meshes.contains_key(map_handle) {
             let map = maps.get(map_handle).unwrap();
 
-            let translation = if *center {
+            let translation = if center.0 {
                 map.center(origin.translation())
             } else {
                 origin.translation()
