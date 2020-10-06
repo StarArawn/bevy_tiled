@@ -6,7 +6,7 @@ use anyhow::Result;
 use bevy::{
     asset::AssetLoader,
     prelude::Mesh,
-    render::{mesh::VertexAttribute, pipeline::PrimitiveTopology},
+    render::{mesh::VertexAttribute, mesh::Indices, pipeline::PrimitiveTopology},
 };
 use glam::{Vec2, Vec4};
 
@@ -261,7 +261,7 @@ impl AssetLoader<Map> for TiledMapLoader {
                                     VertexAttribute::normal(normals),
                                     VertexAttribute::uv(uvs),
                                 ],
-                                indices: Some(indices),
+                                indices: Some(Indices::U32(indices)),
                             };
                             meshes.push((layer_id as u32, tileset_layer.tileset_guid, mesh));
                         }
