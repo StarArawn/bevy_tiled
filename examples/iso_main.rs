@@ -27,6 +27,8 @@ fn camera_movement(
 ) {
     for (_, mut transform) in &mut query.iter() {
         let mut direction = Vec3::zero();
+        let scale = transform.value().x_axis().x();
+        
         if keyboard_input.pressed(KeyCode::A) {
             direction -= Vec3::new(1.0, 0.0, 0.0);
         }
@@ -44,6 +46,14 @@ fn camera_movement(
         }
 
         let translation = transform.translation();
+
+        if keyboard_input.pressed(KeyCode::Z) {
+            transform.set_scale(scale + 0.1);
+        }
+
+        if keyboard_input.pressed(KeyCode::X) {
+            transform.set_scale(scale - 0.1);
+        }
 
         transform.set_translation(translation + time.delta_seconds * direction * 1000.0);
     }
