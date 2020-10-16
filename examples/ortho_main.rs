@@ -49,7 +49,7 @@ fn camera_movement(
             transform.set_scale(scale + 0.1);
         }
 
-        if keyboard_input.pressed(KeyCode::X) {
+        if keyboard_input.pressed(KeyCode::X) && scale > 1.1 {
             transform.set_scale(scale - 0.1);
         }
 

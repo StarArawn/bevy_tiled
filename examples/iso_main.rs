@@ -45,15 +45,15 @@ fn camera_movement(
             direction -= Vec3::new(0.0, 1.0, 0.0);
         }
 
-        let translation = transform.translation();
-
         if keyboard_input.pressed(KeyCode::Z) {
             transform.set_scale(scale + 0.1);
         }
 
-        if keyboard_input.pressed(KeyCode::X) {
+        if keyboard_input.pressed(KeyCode::X)  && scale > 1.1 {
             transform.set_scale(scale - 0.1);
         }
+
+        let translation = transform.translation();
 
         transform.set_translation(translation + time.delta_seconds * direction * 1000.0);
     }
