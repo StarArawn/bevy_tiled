@@ -96,7 +96,7 @@ pub struct TiledMapComponents {
     pub map_asset: Handle<Map>,
     pub materials: HashMap<u32, Handle<ColorMaterial>>,
     pub origin: Transform,
-    pub center: TiledMapCenter
+    pub center: TiledMapCenter,
 }
 
 impl Default for TiledMapComponents {
@@ -105,7 +105,7 @@ impl Default for TiledMapComponents {
             map_asset: Handle::default(),
             materials: HashMap::default(),
             center: TiledMapCenter::default(),
-            origin : Transform::default()
+            origin: Transform::default(),
         }
     }
 }
