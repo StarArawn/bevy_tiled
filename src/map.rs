@@ -227,11 +227,6 @@ pub fn process_loaded_tile_maps(
         if new_meshes.contains_key(map_handle) {
             let map = maps.get(map_handle).unwrap();
 
-            /*let translation = if center.0 {
-                map.center(origin.translation())
-            } else {
-                origin.translation()
-            };*/
             let tile_map_transform = if center.0 {
                 map.center(origin.clone())
             } else {
