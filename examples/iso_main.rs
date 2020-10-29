@@ -15,6 +15,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(bevy_tiled::TiledMapComponents {
             map_asset: asset_server.load("assets/iso-map.tmx").unwrap(),
             center: TiledMapCenter(true),
+            origin: Transform::from_non_uniform_scale(Vec3::new(4.0, 4.0, 1.0)),
             ..Default::default()
         })
         .spawn(Camera2dComponents::default());

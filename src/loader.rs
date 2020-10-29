@@ -217,7 +217,6 @@ impl AssetLoader<Map> for TiledMapLoader {
                         let chunk = &chunk_x[y];
 
                         let mut positions = Vec::new();
-                        let mut normals = Vec::new();
                         let mut uvs = Vec::new();
                         let mut indices = Vec::new();
 
@@ -229,26 +228,21 @@ impl AssetLoader<Map> for TiledMapLoader {
 
                             // X, Y
                             positions.push([tile.vertex.x(), tile.vertex.y(), 0.0]);
-                            normals.push([0.0, 0.0, 1.0]);
                             uvs.push([tile.uv.x(), tile.uv.w()]);
 
                             // X, Y + 1
                             positions.push([tile.vertex.x(), tile.vertex.w(), 0.0]);
-                            normals.push([0.0, 0.0, 1.0]);
                             uvs.push([tile.uv.x(), tile.uv.y()]);
 
                             // X + 1, Y + 1
                             positions.push([tile.vertex.z(), tile.vertex.w(), 0.0]);
-                            normals.push([0.0, 0.0, 1.0]);
                             uvs.push([tile.uv.z(), tile.uv.y()]);
 
                             // X + 1, Y
                             positions.push([tile.vertex.z(), tile.vertex.y(), 0.0]);
-                            normals.push([0.0, 0.0, 1.0]);
                             uvs.push([tile.uv.z(), tile.uv.w()]);
 
-                            let mut new_indices = vec![i + 0, i + 2, i + 1, i + 0, i + 3, i + 2];
-                            indices.append(&mut new_indices);
+                            indices.extend_from_slice(&[i + 0, i + 2, i + 1, i + 0, i + 3, i + 2]);
 
                             i += 4;
                         }
@@ -258,7 +252,6 @@ impl AssetLoader<Map> for TiledMapLoader {
                                 primitive_topology: PrimitiveTopology::TriangleList,
                                 attributes: vec![
                                     VertexAttribute::position(positions),
-                                    VertexAttribute::normal(normals),
                                     VertexAttribute::uv(uvs),
                                 ],
                                 indices: Some(indices),
