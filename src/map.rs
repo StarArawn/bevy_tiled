@@ -179,13 +179,13 @@ impl Map {
                                             );
 
                                             let start = Vec2::new(
-                                                center.x() - tile_width / 2.0,
-                                                center.y() - tile_height / 2.0,
+                                                center.x(),
+                                                center.y() - tile_height,
                                             );
 
                                             let end = Vec2::new(
-                                                center.x() + tile_width / 2.0,
-                                                center.y() + tile_height / 2.0,
+                                                center.x() + tile_width,
+                                                center.y(),
                                             );
 
                                             (start.x(), end.x(), start.y(), end.y())
@@ -199,12 +199,12 @@ impl Map {
 
                                             let start = Vec2::new(
                                                 center.x() - tile_width / 2.0,
-                                                center.y() - tile_height / 2.0,
+                                                center.y() - tile_height,
                                             );
 
                                             let end = Vec2::new(
                                                 center.x() + tile_width / 2.0,
-                                                center.y() + tile_height / 2.0,
+                                                center.y(),
                                             );
 
                                             (start.x(), end.x(), start.y(), end.y())
