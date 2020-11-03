@@ -69,25 +69,17 @@ impl Map {
         let y = ((-(pos.y()) / half_height) - (pos.x() / half_width)) / 2.0;
         Vec2::new(x.round(), y.round())
     }
-    pub fn center(&self, origin: Vec3) -> Vec3 {
+    pub fn center(&self, origin: Transform) -> Transform {
         let tile_size = Vec2::new(self.map.tile_width as f32, self.map.tile_height as f32);
         let map_center = Vec2::new(self.map.width as f32 / 2.0, self.map.height as f32 / 2.0);
         match self.map.orientation {
             tiled::Orientation::Orthogonal => {
                 let center = Map::project_ortho(map_center, tile_size.x(), tile_size.y());
-                Vec3::new(
-                    origin.x() - center.x() * 4.0,
-                    origin.y() - center.y() * 4.0,
-                    origin.z(),
-                )
+                Transform::new(*origin.value() * Mat4::from_translation(-center.extend(0.0)))
             }
             tiled::Orientation::Isometric => {
                 let center = Map::project_iso(map_center, tile_size.x(), tile_size.y());
-                Vec3::new(
-                    origin.x() - center.x() * 4.0,
-                    origin.y() - center.y() * 4.0,
-                    origin.z(),
-                )
+                Transform::new(*origin.value() * Mat4::from_translation(-center.extend(0.0)))
             }
 
             _ => panic!("Unsupported orientation {:?}", self.map.orientation),
@@ -104,7 +96,7 @@ pub struct TiledMapComponents {
     pub map_asset: Handle<Map>,
     pub materials: HashMap<u32, Handle<ColorMaterial>>,
     pub origin: Transform,
-    pub center: TiledMapCenter
+    pub center: TiledMapCenter,
 }
 
 impl Default for TiledMapComponents {
@@ -113,7 +105,7 @@ impl Default for TiledMapComponents {
             map_asset: Handle::default(),
             materials: HashMap::default(),
             center: TiledMapCenter::default(),
-            origin : Transform::default()
+            origin: Transform::default(),
         }
     }
 }
@@ -235,10 +227,10 @@ pub fn process_loaded_tile_maps(
         if new_meshes.contains_key(map_handle) {
             let map = maps.get(map_handle).unwrap();
 
-            let translation = if center.0 {
-                map.center(origin.translation())
+            let tile_map_transform = if center.0 {
+                map.center(origin.clone())
             } else {
-                origin.translation()
+                origin.clone()
             };
 
             let mesh_list = new_meshes.get_mut(map_handle).unwrap();
@@ -266,7 +258,7 @@ pub fn process_loaded_tile_maps(
                             },
                             material: material_handle.clone(),
                             mesh: mesh.clone(),
-                            transform: Transform::from_translation(translation),
+                            transform: tile_map_transform.clone(),
                             ..Default::default()
                         });
                     }

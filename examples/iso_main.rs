@@ -15,6 +15,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(bevy_tiled::TiledMapComponents {
             map_asset: asset_server.load("assets/iso-map.tmx").unwrap(),
             center: TiledMapCenter(true),
+            origin: Transform::from_non_uniform_scale(Vec3::new(4.0, 4.0, 1.0)),
             ..Default::default()
         })
         .spawn(Camera2dComponents::default());
@@ -28,7 +29,7 @@ fn camera_movement(
     for (_, mut transform) in &mut query.iter() {
         let mut direction = Vec3::zero();
         let scale = transform.value().x_axis().x();
-        
+
         if keyboard_input.pressed(KeyCode::A) {
             direction -= Vec3::new(1.0, 0.0, 0.0);
         }
@@ -49,7 +50,7 @@ fn camera_movement(
             transform.set_scale(scale + 0.1);
         }
 
-        if keyboard_input.pressed(KeyCode::X)  && scale > 1.1 {
+        if keyboard_input.pressed(KeyCode::X) && scale > 1.1 {
             transform.set_scale(scale - 0.1);
         }
 
