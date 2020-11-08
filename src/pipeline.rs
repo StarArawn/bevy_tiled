@@ -12,9 +12,10 @@ use bevy::{
         texture::TextureFormat,
     },
 };
+use bevy_type_registry::TypeUuid;
 
 pub const TILE_MAP_PIPELINE_HANDLE: Handle<PipelineDescriptor> =
-    Handle::from_u128(35719948083365670583462682848847416493);
+    Handle::weak_from_u64(PipelineDescriptor::TYPE_UUID, 4129645945969645246);
 
 pub fn build_tile_map_pipeline(shaders: &mut Assets<Shader>) -> PipelineDescriptor {
     PipelineDescriptor {
@@ -74,19 +75,18 @@ pub trait TileMapRenderGraphBuilder {
 
 impl TileMapRenderGraphBuilder for RenderGraph {
     fn add_tile_map_graph(&mut self, resources: &Resources) -> &mut Self {
+        let mut pipelines = resources.get_mut::<Assets<PipelineDescriptor>>().unwrap();
+        let mut shaders = resources.get_mut::<Assets<Shader>>().unwrap();
+        pipelines.set_untracked(
+            TILE_MAP_PIPELINE_HANDLE,
+            build_tile_map_pipeline(&mut shaders),
+        );
         self.add_system_node(
             node::TILE_MAP_CHUNK,
             RenderResourcesNode::<TileMapChunk>::new(true),
         );
         self.add_node_edge(node::TILE_MAP_CHUNK, base::node::MAIN_PASS)
             .unwrap();
-
-        let mut pipelines = resources.get_mut::<Assets<PipelineDescriptor>>().unwrap();
-        let mut shaders = resources.get_mut::<Assets<Shader>>().unwrap();
-        pipelines.set(
-            TILE_MAP_PIPELINE_HANDLE,
-            build_tile_map_pipeline(&mut shaders),
-        );
         self
     }
 }
