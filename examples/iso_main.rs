@@ -6,7 +6,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(bevy_tiled::TiledMapPlugin)
         .add_startup_system(setup.system())
-        //.add_system(camera_movement.system())
+        .add_system(camera_movement.system())
         .run();
 }
 
@@ -15,7 +15,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(bevy_tiled::TiledMapComponents {
             map_asset: asset_server.load("iso-map.tmx"),
             center: TiledMapCenter(true),
-            //origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
+            origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
             ..Default::default()
         })
         .spawn(Camera2dComponents::default());
@@ -48,12 +48,12 @@ fn camera_movement(
 
         if keyboard_input.pressed(KeyCode::Z) {
             let scale = scale + 0.1;
-            transform.apply_non_uniform_scale(Vec3::new(scale, scale, scale));
+            transform.scale = Vec3::new(scale, scale, scale);
         }
 
         if keyboard_input.pressed(KeyCode::X) && scale > 1.1 {
             let scale = scale - 0.1;
-            transform.apply_non_uniform_scale(Vec3::new(scale, scale, scale));
+            transform.scale = Vec3::new(scale, scale, scale);
         }
 
         transform.translation += time.delta_seconds * direction * 1000.;

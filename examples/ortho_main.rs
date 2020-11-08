@@ -6,7 +6,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(bevy_tiled::TiledMapPlugin)
         .add_startup_system(setup.system())
-        //.add_system(camera_movement.system())
+        .add_system(camera_movement.system())
         .run();
 }
 
@@ -15,8 +15,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .spawn(bevy_tiled::TiledMapComponents {
             map_asset: asset_server.load("ortho-map.tmx"),
             center: TiledMapCenter(true),
-            //origin: Transform::from_non_uniform_scale(Vec3::new(4.0, 4.0, 1.0))
-            //    .with_translation(Vec3::new(0.0, 0.0, 10.0)),
+            origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
             ..Default::default()
         })
         .spawn(Camera2dComponents::default());
