@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0"
-bevy = "0.3"
+bevy = { git = "https://github.com/Kurble/bevy.git" }
 bevy_type_registry = "0.3"
 glam = "0.9"
 tiled = "0.9"
