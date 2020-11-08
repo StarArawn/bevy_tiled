@@ -1,4 +1,3 @@
-use crate::TileMapChunk;
 use bevy::{
     prelude::*,
     render::{
@@ -11,8 +10,10 @@ use bevy::{
         shader::{ShaderStage, ShaderStages},
         texture::TextureFormat,
     },
+    type_registry::TypeUuid,
 };
-use bevy_type_registry::TypeUuid;
+
+use crate::TileMapChunk;
 
 pub const TILE_MAP_PIPELINE_HANDLE: Handle<PipelineDescriptor> =
     Handle::weak_from_u64(PipelineDescriptor::TYPE_UUID, 4129645945969645246);

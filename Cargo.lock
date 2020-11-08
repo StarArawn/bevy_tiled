@@ -755,7 +755,7 @@ dependencies = [
  "anyhow",
  "bevy",
  "bevy_type_registry 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "glam 0.9.5",
+ "glam 0.10.0",
  "tiled",
 ]
 
