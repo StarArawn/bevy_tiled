@@ -50,7 +50,7 @@ pub struct Map {
     pub meshes: Vec<(u32, u32, Mesh)>,
     pub layers: Vec<Layer>,
     pub tile_size: Vec2,
-    pub image_folder: String,
+    pub image_folder: std::path::PathBuf,
 }
 
 impl Map {
@@ -334,7 +334,7 @@ impl Map {
             meshes,
             layers,
             tile_size,
-            image_folder: asset_path.parent().unwrap().to_str().unwrap().to_string(),
+            image_folder: asset_path.parent().unwrap().into(),
         };
 
         Ok(map)
@@ -456,7 +456,9 @@ pub fn process_loaded_tile_maps(
         for (_, _, _, mut materials_map, _) in query.iter_mut() {
             for tileset in &map.map.tilesets {
                 if !materials_map.contains_key(&tileset.first_gid) {
-                    let texture_path: &str = tileset.images.first().unwrap().source.as_str();
+                    let texture_path = map
+                        .image_folder
+                        .join(tileset.images.first().unwrap().source.as_str());
                     let texture_handle = asset_server.load(texture_path);
                     materials_map.insert(tileset.first_gid, materials.add(texture_handle.into()));
                 }
