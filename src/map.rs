@@ -317,10 +317,10 @@ impl Map {
                         if positions.len() > 0 {
                             let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
                             mesh.set_attribute(
-                                "position",
+                                "Vertex_Position",
                                 VertexAttributeValues::Float3(positions),
                             );
-                            mesh.set_attribute("uv", VertexAttributeValues::Float2(uvs));
+                            mesh.set_attribute("Vertex_Uv", VertexAttributeValues::Float2(uvs));
                             mesh.set_indices(Some(Indices::U32(indices)));
                             meshes.push((layer_id as u32, tileset_layer.tileset_guid, mesh));
                         }
