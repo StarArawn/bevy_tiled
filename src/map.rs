@@ -1,20 +1,21 @@
+use std::{collections::HashSet, io::BufReader, path::Path};
+
 use anyhow::Result;
 use bevy::{
     prelude::*,
-    render::mesh::Indices,
     render::{
         mesh::VertexAttributeValues,
-        pipeline::PrimitiveTopology,
         pipeline::{DynamicBinding, PipelineSpecialization, RenderPipeline},
+        pipeline::PrimitiveTopology,
         render_graph::base::MainPass,
     },
+    render::mesh::Indices,
+    type_registry::TypeUuid,
     utils::HashMap,
 };
-use bevy_type_registry::TypeUuid;
-
-use crate::{loader::TiledMapLoader, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 use glam::Vec2;
-use std::{collections::HashSet, io::BufReader, path::Path};
+
+use crate::{loader::TiledMapLoader, TILE_MAP_PIPELINE_HANDLE, TileMapChunk};
 
 #[derive(Debug)]
 pub struct Tile {

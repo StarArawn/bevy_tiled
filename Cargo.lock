@@ -243,28 +243,28 @@ version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
  "android_logger 0.9.0",
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
  "bevy_audio",
  "bevy_core",
  "bevy_diagnostic",
  "bevy_dynamic_plugin",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_ecs",
  "bevy_gilrs",
  "bevy_gltf",
  "bevy_input",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_math",
  "bevy_pbr",
- "bevy_property 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_property",
  "bevy_render",
  "bevy_scene",
  "bevy_sprite",
- "bevy_tasks 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_tasks",
  "bevy_text",
  "bevy_transform",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_type_registry",
  "bevy_ui",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_utils",
  "bevy_wgpu",
  "bevy_window",
  "bevy_winit",
@@ -282,25 +282,9 @@ name = "bevy_app"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_derive 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "instant",
- "log",
- "serde",
- "wasm-bindgen",
- "web-sys",
-]
-
-[[package]]
-name = "bevy_app"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93cdf694a6d588bf46a2a7ae5623f176fc5c4ee4d0d71281fdc25bd263136a14"
-dependencies = [
- "bevy_derive 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_ecs 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_utils 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bevy_derive",
+ "bevy_ecs",
+ "bevy_utils",
  "instant",
  "log",
  "serde",
@@ -314,12 +298,12 @@ version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
  "anyhow",
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_property 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_tasks 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_property",
+ "bevy_tasks",
+ "bevy_type_registry",
+ "bevy_utils",
  "crossbeam-channel",
  "downcast-rs",
  "js-sys",
@@ -343,11 +327,11 @@ version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
  "anyhow",
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_ecs",
+ "bevy_type_registry",
+ "bevy_utils",
  "parking_lot 0.11.0",
  "rodio",
 ]
@@ -357,14 +341,14 @@ name = "bevy_core"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_derive 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_property 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_tasks 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
+ "bevy_derive",
+ "bevy_ecs",
+ "bevy_math",
+ "bevy_property",
+ "bevy_tasks",
+ "bevy_type_registry",
+ "bevy_utils",
  "instant",
  "log",
 ]
@@ -373,20 +357,6 @@ dependencies = [
 name = "bevy_derive"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
-dependencies = [
- "Inflector",
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "syn",
- "uuid",
-]
-
-[[package]]
-name = "bevy_derive"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c18d8de3b2f1c66dbac70fbf82bce0dcbeceecf2356eb1b542c735d5c17e0a0"
 dependencies = [
  "Inflector",
  "proc-macro-crate",
@@ -401,10 +371,10 @@ name = "bevy_diagnostic"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_core",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_ecs",
+ "bevy_utils",
  "instant",
  "parking_lot 0.11.0",
  "uuid",
@@ -415,7 +385,7 @@ name = "bevy_dynamic_plugin"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "libloading 0.6.3",
  "log",
 ]
@@ -425,26 +395,9 @@ name = "bevy_ecs"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_hecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_tasks 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "downcast-rs",
- "fixedbitset",
- "log",
- "parking_lot 0.11.0",
- "rand",
- "thiserror",
-]
-
-[[package]]
-name = "bevy_ecs"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ad8a73ad248ed6c16b1ca53eaedd76ae5aa284aa5c4527f8cf3526b5e3a7fce"
-dependencies = [
- "bevy_hecs 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_tasks 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_utils 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bevy_hecs",
+ "bevy_tasks",
+ "bevy_utils",
  "downcast-rs",
  "fixedbitset",
  "log",
@@ -458,8 +411,8 @@ name = "bevy_gilrs"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
+ "bevy_ecs",
  "bevy_input",
  "gilrs",
  "log",
@@ -472,15 +425,15 @@ source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c9358567
 dependencies = [
  "anyhow",
  "base64 0.12.3",
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_ecs",
+ "bevy_math",
  "bevy_pbr",
  "bevy_render",
  "bevy_scene",
  "bevy_transform",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_type_registry",
  "gltf",
  "image",
  "thiserror",
@@ -491,20 +444,8 @@ name = "bevy_hecs"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_hecs_macros 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "lazy_static",
- "serde",
-]
-
-[[package]]
-name = "bevy_hecs"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18661dc92bcb6cc1f2f5ad630f3f3eae7b23942860ea6845a2a775b5a1f7564f"
-dependencies = [
- "bevy_hecs_macros 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_utils 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bevy_hecs_macros",
+ "bevy_utils",
  "lazy_static",
  "serde",
 ]
@@ -513,18 +454,6 @@ dependencies = [
 name = "bevy_hecs_macros"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
-dependencies = [
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "bevy_hecs_macros"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a85e43b7043183821aa62f09c91164a0aa6de771c5397a7a0d0eaf754cc042a"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -537,10 +466,10 @@ name = "bevy_input"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_math",
+ "bevy_utils",
 ]
 
 [[package]]
@@ -548,16 +477,7 @@ name = "bevy_math"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "glam 0.10.0",
-]
-
-[[package]]
-name = "bevy_math"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71ff845326919ef68a796ae4740e33356683020756bc1d23b552b9b31a106fd3"
-dependencies = [
- "glam 0.9.5",
+ "glam",
 ]
 
 [[package]]
@@ -565,16 +485,16 @@ name = "bevy_pbr"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
  "bevy_core",
- "bevy_derive 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_property 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_derive",
+ "bevy_ecs",
+ "bevy_math",
+ "bevy_property",
  "bevy_render",
  "bevy_transform",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_type_registry",
  "bevy_window",
 ]
 
@@ -583,26 +503,10 @@ name = "bevy_property"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_property_derive 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "erased-serde",
- "ron",
- "serde",
- "smallvec 1.4.2",
-]
-
-[[package]]
-name = "bevy_property"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bd127fa915b12581aab82cf77ade4a29c1a7b00c19672b88c187c14d111227c"
-dependencies = [
- "bevy_ecs 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_math 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_property_derive 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_utils 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bevy_ecs",
+ "bevy_math",
+ "bevy_property_derive",
+ "bevy_utils",
  "erased-serde",
  "ron",
  "serde",
@@ -613,18 +517,6 @@ dependencies = [
 name = "bevy_property_derive"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
-dependencies = [
- "proc-macro-crate",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "bevy_property_derive"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3c7a3bc30a90561dc05e662597d595d29a9a7171fb7e5fc34fdb09e4c60c10f"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -639,16 +531,16 @@ source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c9358567
 dependencies = [
  "anyhow",
  "bevy-glsl-to-spirv",
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
  "bevy_core",
- "bevy_derive 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_property 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_derive",
+ "bevy_ecs",
+ "bevy_math",
+ "bevy_property",
  "bevy_transform",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_type_registry",
+ "bevy_utils",
  "bevy_window",
  "bitflags",
  "downcast-rs",
@@ -672,12 +564,12 @@ version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
  "anyhow",
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_property 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_ecs",
+ "bevy_property",
+ "bevy_type_registry",
+ "bevy_utils",
  "parking_lot 0.11.0",
  "ron",
  "serde",
@@ -690,15 +582,15 @@ name = "bevy_sprite"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
  "bevy_core",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_ecs",
+ "bevy_math",
  "bevy_render",
  "bevy_transform",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_type_registry",
+ "bevy_utils",
  "guillotiere",
  "rectangle-pack",
  "thiserror",
@@ -718,34 +610,20 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_tasks"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c39e34a30611a1c4a80a30d252f0c53afa27e9500fa73dae1dca2e41c85c765"
-dependencies = [
- "async-channel",
- "async-executor",
- "event-listener",
- "futures-lite",
- "num_cpus",
- "wasm-bindgen-futures",
-]
-
-[[package]]
 name = "bevy_text"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
  "ab_glyph",
  "anyhow",
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
  "bevy_core",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_math",
  "bevy_render",
  "bevy_sprite",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_type_registry",
+ "bevy_utils",
 ]
 
 [[package]]
@@ -754,8 +632,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bevy",
- "bevy_type_registry 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "glam 0.10.0",
+ "glam",
  "tiled",
 ]
 
@@ -764,12 +641,12 @@ name = "bevy_transform"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_property 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_math",
+ "bevy_property",
+ "bevy_type_registry",
+ "bevy_utils",
  "log",
  "smallvec 1.4.2",
 ]
@@ -779,27 +656,11 @@ name = "bevy_type_registry"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_derive 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_property 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "parking_lot 0.11.0",
- "serde",
- "uuid",
-]
-
-[[package]]
-name = "bevy_type_registry"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4aac65e5c297e547844cb5986da14975181a352f532c8d6fe95f7b62e5a40d32"
-dependencies = [
- "bevy_app 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_derive 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_ecs 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_property 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bevy_utils 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bevy_app",
+ "bevy_derive",
+ "bevy_ecs",
+ "bevy_property",
+ "bevy_utils",
  "parking_lot 0.11.0",
  "serde",
  "uuid",
@@ -810,19 +671,19 @@ name = "bevy_ui"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
  "bevy_core",
- "bevy_derive 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_derive",
+ "bevy_ecs",
  "bevy_input",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_math",
  "bevy_render",
  "bevy_sprite",
  "bevy_text",
  "bevy_transform",
- "bevy_type_registry 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_type_registry",
+ "bevy_utils",
  "bevy_window",
  "stretch",
 ]
@@ -837,27 +698,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_utils"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "554cd4eba4b278f6cc0fe5da0b7dbe8deba51613e6769f93b0d5a8a32eac54b6"
-dependencies = [
- "ahash",
- "getrandom 0.2.0",
-]
-
-[[package]]
 name = "bevy_wgpu"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
  "bevy_asset",
  "bevy_core",
  "bevy_diagnostic",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_ecs",
  "bevy_render",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_utils",
  "bevy_window",
  "bevy_winit",
  "crossbeam-channel",
@@ -873,10 +724,10 @@ name = "bevy_window"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
+ "bevy_ecs",
+ "bevy_math",
+ "bevy_utils",
  "uuid",
  "web-sys",
 ]
@@ -886,11 +737,11 @@ name = "bevy_winit"
 version = "0.3.0"
 source = "git+https://github.com/Kurble/bevy.git#74bc11651b35e7df6091ca6c93585674efcb1d86"
 dependencies = [
- "bevy_app 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_ecs 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_app",
+ "bevy_ecs",
  "bevy_input",
- "bevy_math 0.3.0 (git+https://github.com/Kurble/bevy.git)",
- "bevy_utils 0.3.0 (git+https://github.com/Kurble/bevy.git)",
+ "bevy_math",
+ "bevy_utils",
  "bevy_window",
  "log",
  "wasm-bindgen",
@@ -1855,15 +1706,6 @@ checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
 
 [[package]]
 name = "glam"
-version = "0.9.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8637c7ec4fd0776c51eeab3e0d5d1aa7e440ece3fc2ee7d674e13c957287bfc1"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "glam"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "668e725370f2b2243a5f43c6e4be6be3d501fb2441b81f7ee604ef766b5ab91b"
@@ -1944,7 +1786,7 @@ version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e456943feb7dfc0714363293addda89d76a897c0c155d87eb0ff222818ac7f8"
 dependencies = [
- "glam 0.10.0",
+ "glam",
  "lazy_static",
 ]
 
