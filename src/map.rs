@@ -448,7 +448,11 @@ pub fn process_loaded_tile_maps(
 
     let mut new_meshes = HashMap::<&Handle<Map>, Vec<(u32, u32, Handle<Mesh>)>>::default();
     for changed_map in changed_maps.iter() {
-        let map = maps.get_mut(changed_map).unwrap();
+        let map = if let Some(map) = maps.get_mut(changed_map) {
+            map
+        } else {
+            continue;
+        };
 
         for (_, _, _, mut materials_map, _) in query.iter_mut() {
             for tileset in &map.map.tilesets {
