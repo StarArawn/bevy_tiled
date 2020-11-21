@@ -5,6 +5,9 @@ authors = ["John Mitchell"]
 homepage = "https://github.com/StarArawn/bevy_tiled"
 repository = "https://github.com/StarArawn/bevy_tiled"
 edition = "2018"
+exclude = [
+    "assets/*",
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
