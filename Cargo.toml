@@ -1,9 +1,11 @@
 [package]
 name = "bevy_tiled"
+description = "A plugin for rendering tiled maps."
 version = "0.1.0"
 authors = ["John Mitchell"]
 homepage = "https://github.com/StarArawn/bevy_tiled"
 repository = "https://github.com/StarArawn/bevy_tiled"
+license-file = "LICENSE"
 edition = "2018"
 exclude = [
     "assets/*",
