@@ -3,7 +3,7 @@ use bevy_tiled::TiledMapCenter;
 
 fn main() {
     App::build()
-        .add_default_plugins()
+        .add_plugins(DefaultPlugins)
         .add_plugin(bevy_tiled::TiledMapPlugin)
         .add_startup_system(setup.system())
         .add_system(camera_movement.system())
@@ -13,10 +13,9 @@ fn main() {
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(bevy_tiled::TiledMapComponents {
-            map_asset: asset_server.load("assets/ortho-map.tmx").unwrap(),
+            map_asset: asset_server.load("ortho-map.tmx"),
             center: TiledMapCenter(true),
-            origin: Transform::from_non_uniform_scale(Vec3::new(4.0, 4.0, 1.0))
-                .with_translation(Vec3::new(0.0, 0.0, 10.0)),
+            origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
             ..Default::default()
         })
         .spawn(Camera2dComponents::default());
@@ -27,9 +26,9 @@ fn camera_movement(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&Camera, &mut Transform)>,
 ) {
-    for (_, mut transform) in &mut query.iter() {
+    for (_, mut transform) in query.iter_mut() {
         let mut direction = Vec3::zero();
-        let scale = transform.value().x_axis().x();
+        let scale = transform.scale.x();
 
         if keyboard_input.pressed(KeyCode::A) {
             direction -= Vec3::new(1.0, 0.0, 0.0);
@@ -48,15 +47,15 @@ fn camera_movement(
         }
 
         if keyboard_input.pressed(KeyCode::Z) {
-            transform.set_scale(scale + 0.1);
+            let scale = scale + 0.1;
+            transform.scale = Vec3::new(scale, scale, scale);
         }
 
         if keyboard_input.pressed(KeyCode::X) && scale > 1.1 {
-            transform.set_scale(scale - 0.1);
+            let scale = scale - 0.1;
+            transform.scale = Vec3::new(scale, scale, scale);
         }
 
-        let translation = transform.translation();
-
-        transform.set_translation(translation + time.delta_seconds * direction * 1000.0);
+        transform.translation += time.delta_seconds * direction * 1000.;
     }
 }
