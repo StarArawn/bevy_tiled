@@ -1,10 +1,10 @@
 use bevy::{prelude::*, render::camera::Camera};
-use bevy_tiled::TiledMapCenter;
+use bevy_tiled_prototype::TiledMapCenter;
 
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
-        .add_plugin(bevy_tiled::TiledMapPlugin)
+        .add_plugin(bevy_tiled_prototype::TiledMapPlugin)
         .add_startup_system(setup.system())
         .add_system(camera_movement.system())
         .run();
@@ -12,7 +12,7 @@ fn main() {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
-        .spawn(bevy_tiled::TiledMapComponents {
+        .spawn(bevy_tiled_prototype::TiledMapComponents {
             map_asset: asset_server.load("iso-map.tmx"),
             center: TiledMapCenter(true),
             origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),

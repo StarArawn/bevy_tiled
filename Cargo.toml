@@ -1,5 +1,5 @@
 [package]
-name = "bevy_tiled"
+name = "bevy_tiled_prototype"
 description = "A plugin for rendering tiled maps."
 version = "0.1.0"
 authors = ["John Mitchell"]
