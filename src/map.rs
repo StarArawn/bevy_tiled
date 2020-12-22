@@ -628,7 +628,7 @@ impl Default for DebugConfig {
 
 /// A bundle of tiled map entities.
 #[derive(Bundle)]
-pub struct TiledMapComponents {
+pub struct TiledMapBundle {
     pub map_asset: Handle<Map>,
     pub parent_option: Option<Entity>,
     pub materials: HashMap<u32, Handle<ColorMaterial>>,
@@ -639,7 +639,7 @@ pub struct TiledMapComponents {
     pub created_entities: CreatedMapEntities,
 }
 
-impl Default for TiledMapComponents {
+impl Default for TiledMapBundle {
     fn default() -> Self {
         Self {
             map_asset: Handle::default(),
@@ -663,7 +663,7 @@ pub struct CreatedMapEntities {
 }
 
 #[derive(Bundle)]
-pub struct ChunkComponents {
+pub struct ChunkBundle {
     pub map_parent: Handle<Map>, // tmp:chunks should be child entities of a toplevel map entity.
     pub chunk: TileMapChunk,
     pub main_pass: MainPass,
@@ -676,7 +676,7 @@ pub struct ChunkComponents {
     pub global_transform: GlobalTransform,
 }
 
-impl Default for ChunkComponents {
+impl Default for ChunkBundle {
     fn default() -> Self {
         Self {
             map_parent: Handle::default(),
@@ -870,7 +870,7 @@ pub fn process_loaded_tile_maps(
 
                         // Instead for now spawn a new entity per chunk.
                         let chunk_entity = commands
-                            .spawn(ChunkComponents {
+                            .spawn(ChunkBundle {
                                 chunk: TileMapChunk {
                                     // TODO: Support more layers here..
                                     layer_id: layer_id as f32,

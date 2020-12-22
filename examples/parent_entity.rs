@@ -30,7 +30,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .current_entity();
 
     commands
-        .spawn(bevy_tiled_prototype::TiledMapComponents {
+        .spawn(bevy_tiled_prototype::TiledMapBundle {
             map_asset: asset_server.load("ortho-map.tmx"),
             parent_option: parent,
             center: TiledMapCenter(true),
