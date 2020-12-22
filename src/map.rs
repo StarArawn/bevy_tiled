@@ -5,12 +5,12 @@ use bevy::{
     prelude::*,
     render::{
         mesh::VertexAttributeValues,
-        pipeline::{DynamicBinding, PipelineSpecialization, RenderPipeline},
+        pipeline::{PipelineSpecialization, RenderPipeline},
         pipeline::PrimitiveTopology,
         render_graph::base::MainPass,
     },
     render::mesh::Indices,
-    type_registry::TypeUuid,
+    reflect::TypeUuid,
     utils::HashMap,
 };
 use glam::Vec2;
@@ -56,25 +56,25 @@ pub struct Map {
 
 impl Map {
     pub fn project_ortho(pos: Vec2, tile_width: f32, tile_height: f32) -> Vec2 {
-        let x = tile_width * pos.x();
-        let y = tile_height * pos.y();
+        let x = tile_width * pos.x;
+        let y = tile_height * pos.y;
         Vec2::new(x, -y)
     }
     pub fn unproject_ortho(pos: Vec2, tile_width: f32, tile_height: f32) -> Vec2 {
-        let x = pos.x() / tile_width;
-        let y = -(pos.y()) / tile_height;
+        let x = pos.x / tile_width;
+        let y = -(pos.y) / tile_height;
         Vec2::new(x, y)
     }
     pub fn project_iso(pos: Vec2, tile_width: f32, tile_height: f32) -> Vec2 {
-        let x = (pos.x() - pos.y()) * tile_width / 2.0;
-        let y = (pos.x() + pos.y()) * tile_height / 2.0;
+        let x = (pos.x - pos.y) * tile_width / 2.0;
+        let y = (pos.x + pos.y) * tile_height / 2.0;
         Vec2::new(x, -y)
     }
     pub fn unproject_iso(pos: Vec2, tile_width: f32, tile_height: f32) -> Vec2 {
         let half_width = tile_width / 2.0;
         let half_height = tile_height / 2.0;
-        let x = ((pos.x() / half_width) + (-(pos.y()) / half_height)) / 2.0;
-        let y = ((-(pos.y()) / half_height) - (pos.x() / half_width)) / 2.0;
+        let x = ((pos.x / half_width) + (-(pos.y) / half_height)) / 2.0;
+        let y = ((-(pos.y) / half_height) - (pos.x / half_width)) / 2.0;
         Vec2::new(x.round(), y.round())
     }
     pub fn center(&self, origin: Transform) -> Transform {
@@ -82,13 +82,13 @@ impl Map {
         let map_center = Vec2::new(self.map.width as f32 / 2.0, self.map.height as f32 / 2.0);
         match self.map.orientation {
             tiled::Orientation::Orthogonal => {
-                let center = Map::project_ortho(map_center, tile_size.x(), tile_size.y());
+                let center = Map::project_ortho(map_center, tile_size.x, tile_size.y);
                 Transform::from_matrix(
                     origin.compute_matrix() * Mat4::from_translation(-center.extend(0.0)),
                 )
             }
             tiled::Orientation::Isometric => {
-                let center = Map::project_iso(map_center, tile_size.x(), tile_size.y());
+                let center = Map::project_iso(map_center, tile_size.x, tile_size.y);
                 Transform::from_matrix(
                     origin.compute_matrix() * Mat4::from_translation(-center.extend(0.0)),
                 )
@@ -180,16 +180,16 @@ impl Map {
                                             );
 
                                             let start = Vec2::new(
-                                                center.x(),
-                                                center.y() - tile_height,
+                                                center.x,
+                                                center.y - tile_height,
                                             );
 
                                             let end = Vec2::new(
-                                                center.x() + tile_width,
-                                                center.y(),
+                                                center.x + tile_width,
+                                                center.y,
                                             );
 
-                                            (start.x(), end.x(), start.y(), end.y())
+                                            (start.x, end.x, start.y, end.y)
                                         }
                                         tiled::Orientation::Isometric => {
                                             let center = Map::project_iso(
@@ -199,16 +199,16 @@ impl Map {
                                             );
 
                                             let start = Vec2::new(
-                                                center.x() - tile_width / 2.0,
-                                                center.y() - tile_height,
+                                                center.x - tile_width / 2.0,
+                                                center.y - tile_height,
                                             );
 
                                             let end = Vec2::new(
-                                                center.x() + tile_width / 2.0,
-                                                center.y(),
+                                                center.x + tile_width / 2.0,
+                                                center.y,
                                             );
 
-                                            (start.x(), end.x(), start.y(), end.y())
+                                            (start.x, end.x, start.y, end.y)
                                         }
                                         _ => {
                                             panic!("Unsupported orientation {:?}", map.orientation)
@@ -291,20 +291,20 @@ impl Map {
                             }
 
                             // X, Y
-                            positions.push([tile.vertex.x(), tile.vertex.y(), 0.0]);
-                            uvs.push([tile.uv.x(), tile.uv.w()]);
+                            positions.push([tile.vertex.x, tile.vertex.y, 0.0]);
+                            uvs.push([tile.uv.x, tile.uv.w]);
 
                             // X, Y + 1
-                            positions.push([tile.vertex.x(), tile.vertex.w(), 0.0]);
-                            uvs.push([tile.uv.x(), tile.uv.y()]);
+                            positions.push([tile.vertex.x, tile.vertex.w, 0.0]);
+                            uvs.push([tile.uv.x, tile.uv.y]);
 
                             // X + 1, Y + 1
-                            positions.push([tile.vertex.z(), tile.vertex.w(), 0.0]);
-                            uvs.push([tile.uv.z(), tile.uv.y()]);
+                            positions.push([tile.vertex.z, tile.vertex.w, 0.0]);
+                            uvs.push([tile.uv.z, tile.uv.y]);
 
                             // X + 1, Y
-                            positions.push([tile.vertex.z(), tile.vertex.y(), 0.0]);
-                            uvs.push([tile.uv.z(), tile.uv.w()]);
+                            positions.push([tile.vertex.z, tile.vertex.y, 0.0]);
+                            uvs.push([tile.uv.z, tile.uv.w]);
 
                             indices.extend_from_slice(&[i + 0, i + 2, i + 1, i + 0, i + 3, i + 2]);
 
@@ -373,6 +373,7 @@ pub struct ChunkComponents {
     pub material: Handle<ColorMaterial>,
     pub render_pipeline: RenderPipelines,
     pub draw: Draw,
+    pub visibility: Visible,
     pub mesh: Handle<Mesh>,
     pub transform: Transform,
     pub global_transform: GlobalTransform,
@@ -383,27 +384,19 @@ impl Default for ChunkComponents {
         Self {
             chunk: TileMapChunk::default(),
             draw: Draw {
-                is_transparent: true,
                 ..Default::default()
+            },
+            visibility: Visible {
+                is_visible: true,
+                is_transparent: true
             },
             main_pass: MainPass,
             mesh: Handle::default(),
             material: Handle::default(),
             render_pipeline: RenderPipelines::from_pipelines(vec![RenderPipeline::specialized(
-                TILE_MAP_PIPELINE_HANDLE,
+                TILE_MAP_PIPELINE_HANDLE.clone().typed(),
                 PipelineSpecialization {
-                    dynamic_bindings: vec![
-                        // Transform
-                        DynamicBinding {
-                            bind_group: 2,
-                            binding: 0,
-                        },
-                        // Tile map chunk data
-                        DynamicBinding {
-                            bind_group: 2,
-                            binding: 1,
-                        },
-                    ],
+                    dynamic_bindings: vec!["Transform".to_string(), "TileMapChunk".to_string()].drain(..).collect(),
                     ..Default::default()
                 },
             )]),
@@ -414,7 +407,7 @@ impl Default for ChunkComponents {
 }
 
 pub fn process_loaded_tile_maps(
-    mut commands: Commands,
+    commands: &mut Commands,
     asset_server: Res<AssetServer>,
     mut state: Local<MapResourceProviderState>,
     map_events: Res<Events<AssetEvent<Map>>>,

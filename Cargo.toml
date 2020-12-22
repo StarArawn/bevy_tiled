@@ -2,7 +2,7 @@
 name = "bevy_tiled_prototype"
 description = "A plugin for rendering tiled maps."
 version = "0.1.0"
-authors = ["John Mitchell"]
+authors = ["John Mitchell", "Bram Buurlage<brambuurlage@gmail.com>"]
 homepage = "https://github.com/StarArawn/bevy_tiled"
 repository = "https://github.com/StarArawn/bevy_tiled"
 license-file = "LICENSE"
@@ -15,7 +15,7 @@ exclude = [
 
 [dependencies]
 anyhow = "1.0"
-bevy = "0.3"
-glam = "0.10"
+bevy = "0.4"
+glam = "0.11"
 tiled = "0.9"
 # tiled = { git = "https://github.com/mattyhall/rs-tiled" }

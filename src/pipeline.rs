@@ -10,13 +10,13 @@ use bevy::{
         shader::{ShaderStage, ShaderStages},
         texture::TextureFormat,
     },
-    type_registry::TypeUuid,
+    reflect::TypeUuid,
 };
 
 use crate::TileMapChunk;
 
-pub const TILE_MAP_PIPELINE_HANDLE: Handle<PipelineDescriptor> =
-    Handle::weak_from_u64(PipelineDescriptor::TYPE_UUID, 4129645945969645246);
+pub const TILE_MAP_PIPELINE_HANDLE: HandleUntyped =
+    HandleUntyped::weak_from_u64(PipelineDescriptor::TYPE_UUID, 4129645945969645246);
 
 pub fn build_tile_map_pipeline(shaders: &mut Assets<Shader>) -> PipelineDescriptor {
     PipelineDescriptor {
