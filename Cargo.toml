@@ -1,8 +1,15 @@
 [package]
-name = "bevy_tiled"
+name = "bevy_tiled_prototype"
+description = "A plugin for rendering tiled maps."
 version = "0.1.0"
 authors = ["John Mitchell"]
+homepage = "https://github.com/StarArawn/bevy_tiled"
+repository = "https://github.com/StarArawn/bevy_tiled"
+license-file = "LICENSE"
 edition = "2018"
+exclude = [
+    "assets/*",
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

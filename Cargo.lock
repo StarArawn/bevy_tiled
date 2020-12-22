@@ -650,7 +650,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_tiled"
+name = "bevy_tiled_prototype"
 version = "0.1.0"
 dependencies = [
  "anyhow",
