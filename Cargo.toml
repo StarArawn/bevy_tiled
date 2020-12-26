@@ -15,8 +15,8 @@ exclude = [
 
 [dependencies]
 anyhow = "1.0"
-bevy = "0.3"
-bevy_type_registry = "0.3"
-glam = "0.9"
+bevy = "0.4.0"
+bevy_reflect = "0.4.0"
+glam = "0.11.2"
 tiled = "0.9"
 # tiled = { git = "https://github.com/mattyhall/rs-tiled" }
