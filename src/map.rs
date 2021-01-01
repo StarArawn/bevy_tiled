@@ -13,7 +13,6 @@ use bevy::{
     reflect::TypeUuid,
     utils::HashMap,
 };
-use glam::Vec2;
 
 use crate::{loader::TiledMapLoader, TILE_MAP_PIPELINE_HANDLE, TileMapChunk};
 
