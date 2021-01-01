@@ -8,6 +8,8 @@ pub use pipeline::*;
 mod tile_map;
 pub use tile_map::*;
 
+pub use tiled;
+
 /// Adds support for GLTF file loading to Apps
 #[derive(Default)]
 pub struct TiledMapPlugin;
