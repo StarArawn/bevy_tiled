@@ -56,10 +56,16 @@ pub fn build_tile_map_pipeline(shaders: &mut Assets<Shader>) -> PipelineDescript
         ..PipelineDescriptor::new(ShaderStages {
             vertex: shaders.add(Shader::from_glsl(
                 ShaderStage::Vertex,
+                #[cfg(feature = "web")]
+                include_str!("tile_map_webgl2.vert"),
+                #[cfg(not(feature = "web"))]
                 include_str!("tile_map.vert"),
             )),
             fragment: Some(shaders.add(Shader::from_glsl(
                 ShaderStage::Fragment,
+                #[cfg(feature = "web")]
+                include_str!("tile_map_webgl2.frag"),
+                #[cfg(not(feature = "web"))]
                 include_str!("tile_map.frag"),
             ))),
         })
