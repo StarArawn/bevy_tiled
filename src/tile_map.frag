@@ -1,24 +1,35 @@
-#version 450
+#version 300 es
 
-layout(location = 0) in vec2 v_Uv;
+precision highp float;
 
-layout(location = 0) out vec4 o_Target;
+in vec2 v_Uv;
 
-layout(set = 1, binding = 0) uniform ColorMaterial_color {
+out vec4 o_Target;
+
+layout(std140) uniform ColorMaterial_color {  // set = 1, binding = 0
     vec4 Color;
 };
 
-# ifdef COLORMATERIAL_TEXTURE 
-layout(set = 1, binding = 1) uniform texture2D ColorMaterial_texture;
-layout(set = 1, binding = 2) uniform sampler ColorMaterial_texture_sampler;
+# ifdef COLORMATERIAL_TEXTURE
+uniform sampler2D ColorMaterial_texture;  // set = 1, binding = 1
 # endif
+
+vec4 encodeSRGB(vec4 linearRGB_in)
+{
+    vec3 linearRGB = linearRGB_in.rgb;
+    vec3 a = 12.92 * linearRGB;
+    vec3 b = 1.055 * pow(linearRGB, vec3(1.0 / 2.4)) - 0.055;
+    vec3 c = step(vec3(0.0031308), linearRGB);
+    return vec4(mix(a, b, c), linearRGB_in.a);
+}
 
 void main() {
     vec4 color = Color;
 # ifdef COLORMATERIAL_TEXTURE
     color *= texture(
-        sampler2D(ColorMaterial_texture, ColorMaterial_texture_sampler),
-        v_Uv);
+        ColorMaterial_texture,
+        v_Uv
+    );
 # endif
-    o_Target = color;
+    o_Target = encodeSRGB(color);
 }

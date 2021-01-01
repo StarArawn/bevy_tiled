@@ -1,19 +1,19 @@
-#version 450
+#version 300 es
 
 layout(location = 0) in vec3 Vertex_Position;
 layout(location = 2) in vec2 Vertex_Uv;
 
-layout(location = 0) out vec2 v_Uv;
+out vec2 v_Uv;
 
-layout(set = 0, binding = 0) uniform Camera {
+layout(std140) uniform Camera {
     mat4 ViewProj;
 };
 
-layout(set = 2, binding = 0) uniform Transform {
+layout(std140) uniform Transform {  // set = 2, binding = 0
     mat4 Model;
 };
 
-layout(set = 2, binding = 1) uniform TileMapChunk {
+layout(std140) uniform TileMapChunk {  // set = 2, binding = 1
     float layer_id;
 };
 
