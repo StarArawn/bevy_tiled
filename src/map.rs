@@ -345,6 +345,7 @@ pub struct TiledMapCenter(pub bool);
 pub struct TiledMapComponents {
     pub map_asset: Handle<Map>,
     pub materials: HashMap<u32, Handle<ColorMaterial>>,
+    pub atlases: HashMap<u32, Handle<TextureAtlas>>,
     pub origin: Transform,
     pub center: TiledMapCenter,
 }
@@ -354,6 +355,7 @@ impl Default for TiledMapComponents {
         Self {
             map_asset: Handle::default(),
             materials: HashMap::default(),
+            atlases: HashMap::default(),
             center: TiledMapCenter::default(),
             origin: Transform::default(),
         }
@@ -407,11 +409,13 @@ pub fn process_loaded_tile_maps(
     mut maps: ResMut<Assets<Map>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut query: Query<(
         Entity,
         &TiledMapCenter,
         &Handle<Map>,
         &mut HashMap<u32, Handle<ColorMaterial>>,
+        &mut HashMap<u32, Handle<TextureAtlas>>,
         &Transform,
     )>,
 ) {
@@ -436,14 +440,37 @@ pub fn process_loaded_tile_maps(
     for changed_map in changed_maps.iter() {
         let map = maps.get_mut(changed_map).unwrap();
 
-        for (_, _, _, mut materials_map, _) in query.iter_mut() {
+        for (_, _, _, mut materials_map, mut texture_atlas_map, _) in query.iter_mut() {
             for tileset in &map.map.tilesets {
                 if !materials_map.contains_key(&tileset.first_gid) {
                     let texture_path = map
                         .image_folder
                         .join(tileset.images.first().unwrap().source.as_str());
                     let texture_handle = asset_server.load(texture_path);
-                    materials_map.insert(tileset.first_gid, materials.add(texture_handle.into()));
+                    materials_map.insert(tileset.first_gid, materials.add(texture_handle.clone().into()));
+                    
+                    
+                    // For simplicity use textureAtlasSprite for object layers
+                    // these insertions should be limited to sprites referenced by objects
+                    let tile_width = tileset.tile_width as f32;
+                    let tile_height = tileset.tile_height as f32;
+                    let image = tileset.images.first().unwrap();
+                    let texture_width = image.width as f32;
+                    let texture_height = image.height as f32;
+                    let columns = (texture_width / tile_width).floor() as usize;
+                    let rows = (texture_height / tile_height).floor() as usize;
+
+                    let atlas = TextureAtlas::from_grid(
+                        texture_handle.clone(),
+                        Vec2::new(tile_width, tile_height),
+                        columns,
+                        rows
+                    );
+                    let atlas_handle = texture_atlases.add(atlas);
+                    for i in 0..(columns * rows) as u32 {
+                        println!("insert: {}", tileset.first_gid + i);
+                        texture_atlas_map.insert(tileset.first_gid + i, atlas_handle.clone());
+                    }
                 }
             }
         }
@@ -461,7 +488,7 @@ pub fn process_loaded_tile_maps(
         }
     }
 
-    for (_, center, map_handle, materials_map, origin) in query.iter_mut() {
+    for (_, center, map_handle, materials_map, texture_atlas_map, origin) in query.iter_mut() {
         if new_meshes.contains_key(map_handle) {
             let map = maps.get(map_handle).unwrap();
 
@@ -499,6 +526,37 @@ pub fn process_loaded_tile_maps(
                             transform: tile_map_transform.clone(),
                             ..Default::default()
                         });
+                    }
+                }
+            }
+
+            for layer in map.map.object_groups.iter() {
+                if !layer.visible {
+                    continue;
+                }
+                // TODO: use layer.name, opacity, colour (properties)
+                for object in layer.objects.iter() {
+                    println!("in layer {}, object {}, grp: {}", layer.name, &object.id, object.gid);
+                    match &object.shape {
+                        tiled::ObjectShape::Rect { width: _, height: _ } => {
+                            commands.spawn(SpriteSheetBundle {
+                                transform: Transform {
+                                    translation: Vec3::new(object.x, object.y, 10.0),
+                                    // scale: Vec3::new(width / )), // (width / tile_width).floor();
+                                    ..Default::default()
+                                },
+                                texture_atlas: texture_atlas_map.get(&object.gid).expect("missing texture from atlas").clone(),
+                                sprite: TextureAtlasSprite {
+                                    index: 0,
+                                    ..Default::default()
+                                },
+                                ..Default::default()
+                            });      
+                        }
+                        tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
+                        tiled::ObjectShape::Polyline { points: _ } => {}
+                        tiled::ObjectShape::Polygon { points: _ } => {}
+                        tiled::ObjectShape::Point(_, _) => {}
                     }
                 }
             }
