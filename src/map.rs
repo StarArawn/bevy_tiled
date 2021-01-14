@@ -13,7 +13,7 @@ use glam::Vec2;
 use std::{io::BufReader, path::Path};
 
 #[derive(Debug)]
-pub struct Tile {
+pub struct BevyTile {
     pub tile_id: u32,
     pub pos: Vec2,
     pub vertex: Vec4,
@@ -21,35 +21,35 @@ pub struct Tile {
 }
 
 #[derive(Debug)]
-pub struct Chunk {
+pub struct BevyChunk {
     pub position: Vec2,
-    pub tiles: Vec<Vec<Tile>>,
+    pub tiles: Vec<Vec<BevyTile>>,
 }
 
 #[derive(Debug)]
 pub struct TilesetLayer {
     pub tile_size: Vec2,
-    pub chunks: Vec<Vec<Chunk>>,
+    pub chunks: Vec<Vec<BevyChunk>>,
     pub tileset_guid: u32,
 }
 
 #[derive(Debug)]
-pub struct Layer {
+pub struct BevyLayer {
     pub tileset_layers: Vec<TilesetLayer>,
 }
 
 // An asset for maps
 #[derive(Debug, TypeUuid)]
 #[uuid = "5f6fbac8-3f52-424e-a928-561667fea074"]
-pub struct Map {
+pub struct BevyMap {
     pub map: tiled::Map,
     pub meshes: Vec<(u32, u32, Mesh)>,
-    pub layers: Vec<Layer>,
+    pub layers: Vec<BevyLayer>,
     pub tile_size: Vec2,
     pub image_folder: std::path::PathBuf,
 }
 
-impl Map {
+impl BevyMap {
     pub fn project_ortho(pos: Vec2, tile_width: f32, tile_height: f32) -> Vec2 {
         let x = tile_width * pos.x;
         let y = tile_height * pos.y;
@@ -77,13 +77,13 @@ impl Map {
         let map_center = Vec2::new(self.map.width as f32 / 2.0, self.map.height as f32 / 2.0);
         match self.map.orientation {
             tiled::Orientation::Orthogonal => {
-                let center = Map::project_ortho(map_center, tile_size.x, tile_size.y);
+                let center = BevyMap::project_ortho(map_center, tile_size.x, tile_size.y);
                 Transform::from_matrix(
                     origin.compute_matrix() * Mat4::from_translation(-center.extend(0.0)),
                 )
             }
             tiled::Orientation::Isometric => {
-                let center = Map::project_iso(map_center, tile_size.x, tile_size.y);
+                let center = BevyMap::project_iso(map_center, tile_size.x, tile_size.y);
                 Transform::from_matrix(
                     origin.compute_matrix() * Mat4::from_translation(-center.extend(0.0)),
                 )
@@ -92,7 +92,7 @@ impl Map {
         }
     }
 
-    pub fn try_from_bytes(asset_path: &Path, bytes: Vec<u8>) -> Result<Map> {
+    pub fn try_from_bytes(asset_path: &Path, bytes: Vec<u8>) -> Result<BevyMap> {
         let map = tiled::parse_with_path(BufReader::new(bytes.as_slice()), asset_path).unwrap();
 
         let mut layers = Vec::new();
@@ -168,7 +168,7 @@ impl Map {
                                     // Calculate positions
                                     let (start_x, end_x, start_y, end_y) = match map.orientation {
                                         tiled::Orientation::Orthogonal => {
-                                            let center = Map::project_ortho(
+                                            let center = BevyMap::project_ortho(
                                                 Vec2::new(lookup_x as f32, lookup_y as f32),
                                                 tile_width,
                                                 tile_height,
@@ -187,7 +187,7 @@ impl Map {
                                             (start.x, end.x, start.y, end.y)
                                         }
                                         tiled::Orientation::Isometric => {
-                                            let center = Map::project_iso(
+                                            let center = BevyMap::project_iso(
                                                 Vec2::new(lookup_x as f32, lookup_y as f32),
                                                 tile_width,
                                                 tile_height,
@@ -229,7 +229,7 @@ impl Map {
                                         end_v = temp_startv;
                                     }
 
-                                    Tile {
+                                    BevyTile {
                                         tile_id: map_tile.gid,
                                         pos: Vec2::new(tile_x as f32, tile_y as f32),
                                         vertex: Vec4::new(start_x, start_y, end_x, end_y),
@@ -237,7 +237,7 @@ impl Map {
                                     }
                                 } else {
                                     // Empty tile
-                                    Tile {
+                                    BevyTile {
                                         tile_id: 0,
                                         pos: Vec2::new(tile_x as f32, tile_y as f32),
                                         vertex: Vec4::new(0.0, 0.0, 0.0, 0.0),
@@ -250,7 +250,7 @@ impl Map {
                             tiles.push(tiles_y);
                         }
 
-                        let chunk = Chunk {
+                        let chunk = BevyChunk {
                             position: Vec2::new(chunk_x as f32, chunk_y as f32),
                             tiles,
                         };
@@ -267,7 +267,7 @@ impl Map {
                 tileset_layers.push(tileset_layer);
             }
 
-            let layer = Layer { tileset_layers };
+            let layer = BevyLayer { tileset_layers };
             layers.push(layer);
         }
 
@@ -325,7 +325,7 @@ impl Map {
             }
         }
 
-        let map = Map {
+        let map = BevyMap {
             map,
             meshes,
             layers,
@@ -343,7 +343,7 @@ pub struct TiledMapCenter(pub bool);
 /// A bundle of tiled map entities.
 #[derive(Bundle)]
 pub struct TiledMapComponents {
-    pub map_asset: Handle<Map>,
+    pub map_asset: Handle<BevyMap>,
     pub materials: HashMap<u32, Handle<ColorMaterial>>,
     pub origin: Transform,
     pub center: TiledMapCenter,
@@ -362,7 +362,7 @@ impl Default for TiledMapComponents {
 
 #[derive(Default)]
 pub struct MapResourceProviderState {
-    map_event_reader: EventReader<AssetEvent<Map>>,
+    map_event_reader: EventReader<AssetEvent<BevyMap>>,
 }
 
 #[derive(Bundle)]
@@ -403,19 +403,19 @@ pub fn process_loaded_tile_maps(
     commands: &mut Commands,
     asset_server: Res<AssetServer>,
     mut state: Local<MapResourceProviderState>,
-    map_events: Res<Events<AssetEvent<Map>>>,
-    mut maps: ResMut<Assets<Map>>,
+    map_events: Res<Events<AssetEvent<BevyMap>>>,
+    mut maps: ResMut<Assets<BevyMap>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query: Query<(
         Entity,
         &TiledMapCenter,
-        &Handle<Map>,
+        &Handle<BevyMap>,
         &mut HashMap<u32, Handle<ColorMaterial>>,
         &Transform,
     )>,
 ) {
-    let mut changed_maps = HashSet::<Handle<Map>>::default();
+    let mut changed_maps = HashSet::<Handle<BevyMap>>::default();
     for event in state.map_event_reader.iter(&map_events) {
         match event {
             AssetEvent::Created { handle } => {
@@ -432,7 +432,7 @@ pub fn process_loaded_tile_maps(
         }
     }
 
-    let mut new_meshes = HashMap::<&Handle<Map>, Vec<(u32, u32, Handle<Mesh>)>>::default();
+    let mut new_meshes = HashMap::<&Handle<BevyMap>, Vec<(u32, u32, Handle<Mesh>)>>::default();
     for changed_map in changed_maps.iter() {
         let map = maps.get_mut(changed_map).unwrap();
 
