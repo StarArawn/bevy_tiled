@@ -364,11 +364,18 @@ impl Object {
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid );
     }
     // for now this is here, but it should be in the consuming application
-    pub fn spawn_sprite(&self, commands: &mut Commands, texture_atlas: Option<&Handle<TextureAtlas>> ) {
+    pub fn spawn_sprite(&self,
+        commands: &mut Commands,
+        texture_atlas: Option<&Handle<TextureAtlas>>,
+        map_transform: &Transform,
+    ) {
         match (texture_atlas, self.sprite_index) {
             (Some(texture_atlas), Some(sprite_index)) => {
+                let mut sprite_transform = map_transform.clone();
+                sprite_transform.translation += Vec3::new(self.position.x, self.position.y, 0.01);
+    
                 commands.spawn(SpriteSheetBundle {
-                    // transform: sprite_transform,
+                    transform: sprite_transform,
                     texture_atlas: texture_atlas.clone(),
                     sprite: TextureAtlasSprite {
                         index: sprite_index,
@@ -606,7 +613,7 @@ pub fn process_loaded_tile_maps(
                         tiled::ObjectShape::Rect { width: _, height: _ } => {
                             new_object.set_tile_ids(&tile_gids);
                             new_object.tileset_gid.map(|tileset_gid| {
-                                new_object.spawn_sprite(commands, texture_atlas_map.get(&tileset_gid))
+                                new_object.spawn_sprite(commands, texture_atlas_map.get(&tileset_gid), &tile_map_transform)
                             });
                         }
                         tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
