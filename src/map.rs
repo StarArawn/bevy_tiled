@@ -346,12 +346,12 @@ pub struct Object {
     position: Vec2,
     gid: u32, // sprite ID from tiled::Object
     tileset_gid: Option<u32>, // AKA first_gid
-    sprite_index: Option<u32>, 
+    sprite_index: Option<u32>,
 }
 
 impl Object {
     pub fn new(original_object: &tiled::Object) -> Object {
-        Object { 
+        Object {
             shape: original_object.shape.clone(),
             gid: original_object.gid,
             tileset_gid: None,
@@ -368,26 +368,48 @@ impl Object {
         commands: &mut Commands,
         texture_atlas: Option<&Handle<TextureAtlas>>,
         map_transform: &Transform,
+        map_orientation: tiled::Orientation
     ) {
         match (texture_atlas, self.sprite_index) {
             (Some(texture_atlas), Some(sprite_index)) => {
-                let mut sprite_transform = map_transform.clone();
-                sprite_transform.translation += Vec3::new(self.position.x, self.position.y, 0.01);
-    
                 commands.spawn(SpriteSheetBundle {
-                    transform: sprite_transform,
+                    transform: self.transform(&map_transform, map_orientation),
                     texture_atlas: texture_atlas.clone(),
                     sprite: TextureAtlasSprite {
                         index: sprite_index,
                         ..Default::default()
                     },
                     ..Default::default()
-                });   
+                });
             }
             _ => {
                 panic!("Texture atlas or sprite index missing!")
             }
         }
+    }
+    fn transform(&self, map_transform: &Transform, map_orientation: tiled::Orientation) -> Transform{
+        let mut transform = map_transform.clone();
+        // transform.translation += Vec3::new(self.position.x, -self.position.y, 0.01);
+
+        match self.shape {
+            tiled::ObjectShape::Rect { width, height } => {
+                match map_orientation {
+                    tiled::Orientation::Orthogonal => {
+                        let center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0);
+                        transform.translation += center.extend(10.0);
+                    }
+                    // tiled::Orientation::Isometric => {
+                    // }
+                    _ => panic!("Unsupported orientation {:?}", map_orientation),
+                }
+            }
+            tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
+            tiled::ObjectShape::Polyline { points: _ } => {}
+            tiled::ObjectShape::Polygon { points: _ } => {}
+            tiled::ObjectShape::Point(_, _) => {}
+        }
+
+        transform
     }
 }
 
@@ -507,7 +529,7 @@ pub fn process_loaded_tile_maps(
                     object_gids.insert(*first_gid);
                 });
             }
-        }    
+        }
 
         for (_, _, _, mut materials_map, mut texture_atlas_map, _) in query.iter_mut() {
             for tileset in &map.map.tilesets {
@@ -517,7 +539,7 @@ pub fn process_loaded_tile_maps(
                         .join(tileset.images.first().unwrap().source.as_str());
                     let texture_handle = asset_server.load(texture_path);
                     materials_map.insert(tileset.first_gid, materials.add(texture_handle.clone().into()));
-                    
+
                     if object_gids.contains(&tileset.first_gid) {
                         // For simplicity use textureAtlasSprite for object layers
                         // these insertions should be limited to sprites referenced by objects
@@ -613,7 +635,12 @@ pub fn process_loaded_tile_maps(
                         tiled::ObjectShape::Rect { width: _, height: _ } => {
                             new_object.set_tile_ids(&tile_gids);
                             new_object.tileset_gid.map(|tileset_gid| {
-                                new_object.spawn_sprite(commands, texture_atlas_map.get(&tileset_gid), &tile_map_transform)
+                                // maybe move this into spawn_sprite/translate methods on Object:
+                                let mut map_transform = tile_map_transform.clone();
+                                let map_tile_width = map.map.tile_width as f32;
+                                let map_tile_height = map.map.tile_height as f32;
+                                map_transform.translation -= Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
+                                new_object.spawn_sprite(commands, texture_atlas_map.get(&tileset_gid), &map_transform, map.map.orientation)
                             });
                         }
                         tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
