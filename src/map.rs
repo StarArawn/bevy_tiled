@@ -376,10 +376,15 @@ impl Object {
         map_transform.translation -= Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
 
         let map_orientation: tiled::Orientation = map.orientation;
-        match (texture_atlas, self.sprite_index) {
-            (Some(texture_atlas), Some(sprite_index)) => {
+        match (texture_atlas, self.sprite_index, self.tileset_gid) {
+            (Some(texture_atlas), Some(sprite_index), Some(tileset_gid)) => {
+                // this could probably be saved in the maps somewhere when texture atlas created..
+                let tile_size = map.tilesets.iter().find(|ts| {
+                    ts.first_gid == tileset_gid
+                }).map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
+
                 commands.spawn(SpriteSheetBundle {
-                    transform: self.transform(&map_transform, map_orientation),
+                    transform: self.transform(&map_transform, map_orientation, tile_size),
                     texture_atlas: texture_atlas.clone(),
                     sprite: TextureAtlasSprite {
                         index: sprite_index,
@@ -389,19 +394,20 @@ impl Object {
                 });
             }
             _ => {
-                panic!("Texture atlas or sprite index missing!")
+                panic!("Texture atlas, tilesset_gid, or sprite index missing!")
             }
         }
     }
-    fn transform(&self, map_transform: &Transform, map_orientation: tiled::Orientation) -> Transform{
+    fn transform(&self, map_transform: &Transform, map_orientation: tiled::Orientation, tile_size: Option<Vec2>) -> Transform{
         let mut transform = map_transform.clone();
         // transform.translation += Vec3::new(self.position.x, -self.position.y, 0.01);
-
         match self.shape {
             tiled::ObjectShape::Rect { width, height } => {
+                let scale = tile_size.map(|ts| { Vec2::new(width, height) / ts });
                 match map_orientation {
                     tiled::Orientation::Orthogonal => {
                         let center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0);
+                        transform.scale = scale.unwrap_or(Vec2::new(1.0, 1.0)).extend(1.0);
                         transform.translation += center.extend(10.0);
                     }
                     // tiled::Orientation::Isometric => {
@@ -546,6 +552,7 @@ pub fn process_loaded_tile_maps(
                     let texture_handle = asset_server.load(texture_path);
                     materials_map.insert(tileset.first_gid, materials.add(texture_handle.clone().into()));
 
+                    // only generate texture_atlas for tilesets used in objects
                     if object_gids.contains(&tileset.first_gid) {
                         // For simplicity use textureAtlasSprite for object layers
                         // these insertions should be limited to sprites referenced by objects
