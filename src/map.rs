@@ -363,7 +363,7 @@ impl Object {
         self.tileset_gid = tile_gids.get(&self.gid).cloned();
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid );
     }
-    // for now this is here, but it should be in the consuming application
+    // for now this is here, but it should probably be in the consuming application?
     pub fn spawn_aligned_sprite(&self,
         commands: &mut Commands,
         texture_atlas: Option<&Handle<TextureAtlas>>,
@@ -373,7 +373,7 @@ impl Object {
         let mut map_transform = tile_map_transform.clone();
         let map_tile_width = map.tile_width as f32;
         let map_tile_height = map.tile_height as f32;
-        map_transform.translation -= Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
+        map_transform.translation -= map_transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
 
         let map_orientation: tiled::Orientation = map.orientation;
         match (texture_atlas, self.sprite_index, self.tileset_gid) {
@@ -400,15 +400,19 @@ impl Object {
     }
     fn transform(&self, map_transform: &Transform, map_orientation: tiled::Orientation, tile_size: Option<Vec2>) -> Transform{
         let mut transform = map_transform.clone();
+        let object_default_z = 10.0;
         // transform.translation += Vec3::new(self.position.x, -self.position.y, 0.01);
         match self.shape {
             tiled::ObjectShape::Rect { width, height } => {
                 let scale = tile_size.map(|ts| { Vec2::new(width, height) / ts });
                 match map_orientation {
                     tiled::Orientation::Orthogonal => {
-                        let center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0);
-                        transform.scale = scale.unwrap_or(Vec2::new(1.0, 1.0)).extend(1.0);
-                        transform.translation += center.extend(10.0);
+                        let mut center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0).extend(object_default_z);
+                        // apply map scale to object position
+                        center *= transform.scale;
+                        // replace scale with scale provided by object height/width - allow nonuniform (skew) with max original
+                        transform.scale = scale.unwrap_or(Vec2::new(1.0, 1.0)).extend(1.0) * transform.scale.max_element();
+                        transform.translation += center;
                     }
                     // tiled::Orientation::Isometric => {
                     // }
