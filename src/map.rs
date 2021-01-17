@@ -340,6 +340,51 @@ impl Map {
 #[derive(Default)]
 pub struct TiledMapCenter(pub bool);
 
+#[derive(Debug)]
+pub struct Object {
+    shape: tiled::ObjectShape,
+    position: Vec2,
+    gid: u32, // sprite ID from tiled::Object
+    tileset_gid: Option<u32>, // AKA first_gid
+    sprite_index: Option<u32>, 
+}
+
+impl Object {
+    pub fn new(original_object: &tiled::Object) -> Object {
+        Object { 
+            shape: original_object.shape.clone(),
+            gid: original_object.gid,
+            tileset_gid: None,
+            sprite_index: None,
+            position: Vec2::new(original_object.x, original_object.y),
+        }
+    }
+    pub fn set_tile_ids(&mut self, tile_gids: &HashMap<u32, u32>) {
+        self.tileset_gid = tile_gids.get(&self.gid).cloned();
+        self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid );
+    }
+    // for now this is here, but it should be in the consuming application
+    pub fn spawn_sprite(&self, commands: &mut Commands, texture_atlas: Option<&Handle<TextureAtlas>> ) {
+        match (texture_atlas, self.sprite_index) {
+            (Some(texture_atlas), Some(sprite_index)) => {
+                commands.spawn(SpriteSheetBundle {
+                    // transform: sprite_transform,
+                    texture_atlas: texture_atlas.clone(),
+                    sprite: TextureAtlasSprite {
+                        index: sprite_index,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                });   
+            }
+            _ => {
+                panic!("Texture atlas or sprite index missing!")
+            }
+        }
+    }
+}
+
+
 /// A bundle of tiled map entities.
 #[derive(Bundle)]
 pub struct TiledMapComponents {
@@ -555,30 +600,14 @@ pub fn process_loaded_tile_maps(
                 // TODO: use object_group.name, opacity, colour (properties)
                 for object in object_group.objects.iter() {
                     println!("in object_group {}, object {}, grp: {}", object_group.name, &object.id, object.gid);
+                    let mut new_object = Object::new(object);
+
                     match &object.shape {
                         tiled::ObjectShape::Rect { width: _, height: _ } => {
-                            match tile_gids.get(&object.gid) {
-                                Some(first_gid) => {
-                                    commands.spawn(SpriteSheetBundle {
-                                        transform: Transform {
-                                            translation: Vec3::new(object.x, object.y, 0.0),
-                                            // scale: Vec3::new(width / )), // (width / tile_width).floor();
-                                            ..Default::default()
-                                        },
-                                        texture_atlas: texture_atlas_map.get(first_gid).expect("missing texture from atlas").clone(),
-                                        sprite: TextureAtlasSprite {
-                                            index: object.gid - *first_gid,
-                                            ..Default::default()
-                                        },
-                                        ..Default::default()
-                                    });   
-                                },
-                                None => {
-                                    panic!("No support for objects without tile reference!")
-                                }
-
-                            }
-   
+                            new_object.set_tile_ids(&tile_gids);
+                            new_object.tileset_gid.map(|tileset_gid| {
+                                new_object.spawn_sprite(commands, texture_atlas_map.get(&tileset_gid))
+                            });
                         }
                         tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
                         tiled::ObjectShape::Polyline { points: _ } => {}
