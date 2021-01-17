@@ -364,12 +364,18 @@ impl Object {
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid );
     }
     // for now this is here, but it should be in the consuming application
-    pub fn spawn_sprite(&self,
+    pub fn spawn_aligned_sprite(&self,
         commands: &mut Commands,
         texture_atlas: Option<&Handle<TextureAtlas>>,
-        map_transform: &Transform,
-        map_orientation: tiled::Orientation
+        map: &tiled::Map,
+        tile_map_transform: &Transform,
     ) {
+        let mut map_transform = tile_map_transform.clone();
+        let map_tile_width = map.tile_width as f32;
+        let map_tile_height = map.tile_height as f32;
+        map_transform.translation -= Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
+
+        let map_orientation: tiled::Orientation = map.orientation;
         match (texture_atlas, self.sprite_index) {
             (Some(texture_atlas), Some(sprite_index)) => {
                 commands.spawn(SpriteSheetBundle {
@@ -635,12 +641,12 @@ pub fn process_loaded_tile_maps(
                         tiled::ObjectShape::Rect { width: _, height: _ } => {
                             new_object.set_tile_ids(&tile_gids);
                             new_object.tileset_gid.map(|tileset_gid| {
-                                // maybe move this into spawn_sprite/translate methods on Object:
-                                let mut map_transform = tile_map_transform.clone();
-                                let map_tile_width = map.map.tile_width as f32;
-                                let map_tile_height = map.map.tile_height as f32;
-                                map_transform.translation -= Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
-                                new_object.spawn_sprite(commands, texture_atlas_map.get(&tileset_gid), &map_transform, map.map.orientation)
+                                new_object.spawn_aligned_sprite(
+                                    commands,
+                                    texture_atlas_map.get(&tileset_gid),
+                                    &map.map,
+                                    &tile_map_transform
+                                );
                             });
                         }
                         tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
