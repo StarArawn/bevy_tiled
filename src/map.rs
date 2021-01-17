@@ -437,8 +437,25 @@ pub fn process_loaded_tile_maps(
     }
 
     let mut new_meshes = HashMap::<&Handle<Map>, Vec<(u32, u32, Handle<Mesh>)>>::default();
+    // this only works if gids are uniques across all maps used
+    let mut tile_gids: HashMap<u32, u32> = Default::default();
     for changed_map in changed_maps.iter() {
         let map = maps.get_mut(changed_map).unwrap();
+
+        for tileset in &map.map.tilesets {
+            for i in tileset.first_gid..(tileset.first_gid + tileset.tilecount.unwrap_or(1)) {
+                tile_gids.insert(i, tileset.first_gid);
+            }
+        }
+
+        let mut object_gids: HashSet<u32> = Default::default();
+        for object_group in map.map.object_groups.iter() {
+            for object in object_group.objects.iter() {
+                tile_gids.get(&object.gid).map(|first_gid| {
+                    object_gids.insert(*first_gid);
+                });
+            }
+        }    
 
         for (_, _, _, mut materials_map, mut texture_atlas_map, _) in query.iter_mut() {
             for tileset in &map.map.tilesets {
@@ -449,27 +466,28 @@ pub fn process_loaded_tile_maps(
                     let texture_handle = asset_server.load(texture_path);
                     materials_map.insert(tileset.first_gid, materials.add(texture_handle.clone().into()));
                     
-                    
-                    // For simplicity use textureAtlasSprite for object layers
-                    // these insertions should be limited to sprites referenced by objects
-                    let tile_width = tileset.tile_width as f32;
-                    let tile_height = tileset.tile_height as f32;
-                    let image = tileset.images.first().unwrap();
-                    let texture_width = image.width as f32;
-                    let texture_height = image.height as f32;
-                    let columns = (texture_width / tile_width).floor() as usize;
-                    let rows = (texture_height / tile_height).floor() as usize;
+                    if object_gids.contains(&tileset.first_gid) {
+                        // For simplicity use textureAtlasSprite for object layers
+                        // these insertions should be limited to sprites referenced by objects
+                        let tile_width = tileset.tile_width as f32;
+                        let tile_height = tileset.tile_height as f32;
+                        let image = tileset.images.first().unwrap();
+                        let texture_width = image.width as f32;
+                        let texture_height = image.height as f32;
+                        let columns = (texture_width / tile_width).floor() as usize;
+                        let rows = (texture_height / tile_height).floor() as usize;
 
-                    let atlas = TextureAtlas::from_grid(
-                        texture_handle.clone(),
-                        Vec2::new(tile_width, tile_height),
-                        columns,
-                        rows
-                    );
-                    let atlas_handle = texture_atlases.add(atlas);
-                    for i in 0..(columns * rows) as u32 {
-                        println!("insert: {}", tileset.first_gid + i);
-                        texture_atlas_map.insert(tileset.first_gid + i, atlas_handle.clone());
+                        let atlas = TextureAtlas::from_grid(
+                            texture_handle.clone(),
+                            Vec2::new(tile_width, tile_height),
+                            columns,
+                            rows
+                        );
+                        let atlas_handle = texture_atlases.add(atlas);
+                        for i in 0..(columns * rows) as u32 {
+                            println!("insert: {}", tileset.first_gid + i);
+                            texture_atlas_map.insert(tileset.first_gid + i, atlas_handle.clone());
+                        }
                     }
                 }
             }
@@ -530,28 +548,37 @@ pub fn process_loaded_tile_maps(
                 }
             }
 
-            for layer in map.map.object_groups.iter() {
-                if !layer.visible {
+            for object_group in map.map.object_groups.iter() {
+                if !object_group.visible {
                     continue;
                 }
-                // TODO: use layer.name, opacity, colour (properties)
-                for object in layer.objects.iter() {
-                    println!("in layer {}, object {}, grp: {}", layer.name, &object.id, object.gid);
+                // TODO: use object_group.name, opacity, colour (properties)
+                for object in object_group.objects.iter() {
+                    println!("in object_group {}, object {}, grp: {}", object_group.name, &object.id, object.gid);
                     match &object.shape {
                         tiled::ObjectShape::Rect { width: _, height: _ } => {
-                            commands.spawn(SpriteSheetBundle {
-                                transform: Transform {
-                                    translation: Vec3::new(object.x, object.y, 10.0),
-                                    // scale: Vec3::new(width / )), // (width / tile_width).floor();
-                                    ..Default::default()
+                            match tile_gids.get(&object.gid) {
+                                Some(first_gid) => {
+                                    commands.spawn(SpriteSheetBundle {
+                                        transform: Transform {
+                                            translation: Vec3::new(object.x, object.y, 0.0),
+                                            // scale: Vec3::new(width / )), // (width / tile_width).floor();
+                                            ..Default::default()
+                                        },
+                                        texture_atlas: texture_atlas_map.get(first_gid).expect("missing texture from atlas").clone(),
+                                        sprite: TextureAtlasSprite {
+                                            index: object.gid - *first_gid,
+                                            ..Default::default()
+                                        },
+                                        ..Default::default()
+                                    });   
                                 },
-                                texture_atlas: texture_atlas_map.get(&object.gid).expect("missing texture from atlas").clone(),
-                                sprite: TextureAtlasSprite {
-                                    index: 0,
-                                    ..Default::default()
-                                },
-                                ..Default::default()
-                            });      
+                                None => {
+                                    panic!("No support for objects without tile reference!")
+                                }
+
+                            }
+   
                         }
                         tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
                         tiled::ObjectShape::Polyline { points: _ } => {}
