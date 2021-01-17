@@ -400,19 +400,19 @@ impl Object {
     }
     fn transform(&self, map_transform: &Transform, map_orientation: tiled::Orientation, tile_size: Option<Vec2>) -> Transform{
         let mut transform = map_transform.clone();
-        let object_default_z = 10.0;
-        // transform.translation += Vec3::new(self.position.x, -self.position.y, 0.01);
+        // replacing map Z with something far in front for objects -- should probably be configurable
+        // transform.translation.z = 1000.0;
         match self.shape {
             tiled::ObjectShape::Rect { width, height } => {
                 let scale = tile_size.map(|ts| { Vec2::new(width, height) / ts });
                 match map_orientation {
                     tiled::Orientation::Orthogonal => {
-                        let mut center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0).extend(object_default_z);
+                        let mut center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0);
                         // apply map scale to object position
-                        center *= transform.scale;
+                        center *= transform.scale.truncate();
                         // replace scale with scale provided by object height/width - allow nonuniform (skew) with max original
                         transform.scale = scale.unwrap_or(Vec2::new(1.0, 1.0)).extend(1.0) * transform.scale.max_element();
-                        transform.translation += center;
+                        transform.translation += center.extend(-center.y / 100.0); // for layering properly, up = farther back
                     }
                     // tiled::Orientation::Isometric => {
                     // }
