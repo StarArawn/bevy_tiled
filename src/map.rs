@@ -297,28 +297,19 @@ impl Map {
                             // X + 1, Y
                             positions.push([tile.vertex.z, tile.vertex.y, 0.0]);
 
-                            let mut next_uvs: Vec<(f32, f32)> = Default::default();
+                            let mut next_uvs = [ 
+                                // X, Y
+                                [tile.uv.x, tile.uv.w],
+                                // X, Y + 1
+                                [tile.uv.x, tile.uv.y],
+                                // X + 1, Y + 1
+                                [tile.uv.z, tile.uv.y],
+                                // X + 1, Y
+                                [tile.uv.z, tile.uv.w]
+                            ];
                             if tile.flip_d {
-                                // X + 1, Y + 1
-                                next_uvs.push((tile.uv.z, tile.uv.y));
-                                // X, Y + 1
-                                next_uvs.push((tile.uv.x, tile.uv.y));
-                                // X, Y
-                                next_uvs.push((tile.uv.x, tile.uv.w));
-                                // X + 1, Y
-                                next_uvs.push((tile.uv.z, tile.uv.w));
-                            } else {
-                                // X, Y
-                                next_uvs.push((tile.uv.x, tile.uv.w));
-                                // X, Y + 1
-                                next_uvs.push((tile.uv.x, tile.uv.y));
-                                // X + 1, Y + 1
-                                next_uvs.push((tile.uv.z, tile.uv.y));
-                                // X + 1, Y
-                                next_uvs.push((tile.uv.z, tile.uv.w));
+                                next_uvs.swap(0, 2);
                             }
-
-
                             if tile.flip_h {
                                 next_uvs.reverse();
                             }
@@ -328,7 +319,7 @@ impl Map {
                                 next_uvs.swap(1, 3);
                             }
 
-                            next_uvs.iter().for_each(|uv| uvs.push([uv.0, uv.1]));
+                            next_uvs.iter().for_each(|uv| uvs.push(*uv));
 
                             indices.extend_from_slice(&[i + 0, i + 2, i + 1, i + 0, i + 3, i + 2]);
 
