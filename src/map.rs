@@ -18,6 +18,9 @@ pub struct Tile {
     pub pos: Vec2,
     pub vertex: Vec4,
     pub uv: Vec4,
+    pub flip_d: bool,
+    pub flip_h: bool,
+    pub flip_v: bool,
 }
 
 #[derive(Debug)]
@@ -211,29 +214,21 @@ impl Map {
                                     };
 
                                     // Calculate UV:
-                                    let mut start_u: f32 = sprite_sheet_x / texture_width;
-                                    let mut end_u: f32 =
+                                    let start_u: f32 = sprite_sheet_x / texture_width;
+                                    let end_u: f32 =
                                         (sprite_sheet_x + tile_width) / texture_width;
-                                    let mut start_v: f32 = sprite_sheet_y / texture_height;
-                                    let mut end_v: f32 =
+                                    let start_v: f32 = sprite_sheet_y / texture_height;
+                                    let end_v: f32 =
                                         (sprite_sheet_y + tile_height) / texture_height;
-
-                                    if map_tile.flip_h {
-                                        let temp_startu = start_u;
-                                        start_u = end_u;
-                                        end_u = temp_startu;
-                                    }
-                                    if map_tile.flip_v {
-                                        let temp_startv = start_v;
-                                        start_v = end_v;
-                                        end_v = temp_startv;
-                                    }
 
                                     Tile {
                                         tile_id: map_tile.gid,
                                         pos: Vec2::new(tile_x as f32, tile_y as f32),
                                         vertex: Vec4::new(start_x, start_y, end_x, end_y),
                                         uv: Vec4::new(start_u, start_v, end_u, end_v),
+                                        flip_d: map_tile.flip_d,
+                                        flip_h: map_tile.flip_h,
+                                        flip_v: map_tile.flip_v,
                                     }
                                 } else {
                                     // Empty tile
@@ -242,6 +237,9 @@ impl Map {
                                         pos: Vec2::new(tile_x as f32, tile_y as f32),
                                         vertex: Vec4::new(0.0, 0.0, 0.0, 0.0),
                                         uv: Vec4::new(0.0, 0.0, 0.0, 0.0),
+                                        flip_d: false,
+                                        flip_h: false,
+                                        flip_v: false,
                                     }
                                 };
 
@@ -289,21 +287,48 @@ impl Map {
                                 continue;
                             }
 
+
                             // X, Y
                             positions.push([tile.vertex.x, tile.vertex.y, 0.0]);
-                            uvs.push([tile.uv.x, tile.uv.w]);
-
                             // X, Y + 1
                             positions.push([tile.vertex.x, tile.vertex.w, 0.0]);
-                            uvs.push([tile.uv.x, tile.uv.y]);
-
                             // X + 1, Y + 1
                             positions.push([tile.vertex.z, tile.vertex.w, 0.0]);
-                            uvs.push([tile.uv.z, tile.uv.y]);
-
                             // X + 1, Y
                             positions.push([tile.vertex.z, tile.vertex.y, 0.0]);
-                            uvs.push([tile.uv.z, tile.uv.w]);
+
+                            let mut next_uvs: Vec<(f32, f32)> = Default::default();
+                            if tile.flip_d {
+                                // X + 1, Y + 1
+                                next_uvs.push((tile.uv.z, tile.uv.y));
+                                // X, Y + 1
+                                next_uvs.push((tile.uv.x, tile.uv.y));
+                                // X, Y
+                                next_uvs.push((tile.uv.x, tile.uv.w));
+                                // X + 1, Y
+                                next_uvs.push((tile.uv.z, tile.uv.w));
+                            } else {
+                                // X, Y
+                                next_uvs.push((tile.uv.x, tile.uv.w));
+                                // X, Y + 1
+                                next_uvs.push((tile.uv.x, tile.uv.y));
+                                // X + 1, Y + 1
+                                next_uvs.push((tile.uv.z, tile.uv.y));
+                                // X + 1, Y
+                                next_uvs.push((tile.uv.z, tile.uv.w));
+                            }
+
+
+                            if tile.flip_h {
+                                next_uvs.reverse();
+                            }
+                            if tile.flip_v {
+                                next_uvs.reverse();
+                                next_uvs.swap(0, 2);
+                                next_uvs.swap(1, 3);
+                            }
+
+                            next_uvs.iter().for_each(|uv| uvs.push([uv.0, uv.1]));
 
                             indices.extend_from_slice(&[i + 0, i + 2, i + 1, i + 0, i + 3, i + 2]);
 
