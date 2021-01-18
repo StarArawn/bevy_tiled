@@ -592,7 +592,7 @@ pub fn process_loaded_tile_maps(
                         );
                         let atlas_handle = texture_atlases.add(atlas);
                         for i in 0..(columns * rows) as u32 {
-                            println!("insert: {}", tileset.first_gid + i);
+                            // println!("insert: {}", tileset.first_gid + i);
                             texture_atlas_map.insert(tileset.first_gid + i, atlas_handle.clone());
                         }
                     }
@@ -661,7 +661,7 @@ pub fn process_loaded_tile_maps(
                 }
                 // TODO: use object_group.name, opacity, colour (properties)
                 for object in object_group.objects.iter() {
-                    println!("in object_group {}, object {}, grp: {}", object_group.name, &object.id, object.gid);
+                    // println!("in object_group {}, object {}, grp: {}", object_group.name, &object.id, object.gid);
                     let mut new_object = Object::new(object);
 
                     match &object.shape {
