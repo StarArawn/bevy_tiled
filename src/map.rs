@@ -12,6 +12,8 @@ use crate::{loader::TiledMapLoader, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 use glam::Vec2;
 use std::{io::BufReader, path::Path};
 
+pub use tiled::ObjectShape;
+
 #[derive(Debug)]
 pub struct Tile {
     pub tile_id: u32,
@@ -384,8 +386,8 @@ pub struct TiledMapCenter(pub bool);
 pub struct ObjectGroup {
     name: String,
     opacity: f32,
-    visible: bool,
-    objects: Vec<Object>,
+    pub visible: bool,
+    pub objects: Vec<Object>,
 }
 
 
@@ -403,8 +405,8 @@ impl ObjectGroup {
 
 #[derive(Debug)]
 pub struct Object {
-    shape: tiled::ObjectShape,
-    position: Vec2,
+    pub shape: tiled::ObjectShape,
+    pub position: Vec2,
     gid: u32, // sprite ID from tiled::Object
     tileset_gid: Option<u32>, // AKA first_gid
     sprite_index: Option<u32>,
@@ -522,7 +524,7 @@ impl Default for TiledMapComponents {
 
 #[derive(Default)]
 pub struct MapResourceProviderState {
-    map_event_reader: EventReader<AssetEvent<Map>>,
+    pub map_event_reader: EventReader<AssetEvent<Map>>,
 }
 
 #[derive(Bundle)]
