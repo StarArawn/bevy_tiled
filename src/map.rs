@@ -102,14 +102,33 @@ impl Map {
         let mut layers = Vec::new();
         let mut groups = Vec::new();
 
+        // this only works if gids are uniques across all maps used - todo move into ObjectGroup?
+        let mut tile_gids: HashMap<u32, u32> = Default::default();
+
+        for tileset in &map.tilesets {
+            for i in tileset.first_gid..(tileset.first_gid + tileset.tilecount.unwrap_or(1)) {
+                tile_gids.insert(i, tileset.first_gid);
+            }
+        }
+
+        let mut object_gids: HashSet<u32> = Default::default();
+        for object_group in map.object_groups.iter() {
+            let mut tiled_o_g = ObjectGroup::new(object_group);
+            for object in object_group.objects.iter() {
+                tiled_o_g.objects.push(Object::create(object, &tile_gids));
+                tile_gids.get(&object.gid).map(|first_gid| {
+                    object_gids.insert(*first_gid);
+                });
+            }
+            groups.push(tiled_o_g);
+        }
+
         let target_chunk_x = 32;
         let target_chunk_y = 32;
 
         let chunk_size_x = (map.width as f32 / target_chunk_x as f32).ceil().max(1.0) as usize;
         let chunk_size_y = (map.height as f32 / target_chunk_y as f32).ceil().max(1.0) as usize;
         let tile_size = Vec2::new(map.tile_width as f32, map.tile_height as f32);
-
-        map.object_groups.iter().for_each(|og| groups.push(ObjectGroup::new(og)));
 
         for layer in map.layers.iter() {
             if !layer.visible {
@@ -301,7 +320,7 @@ impl Map {
                             // X + 1, Y
                             positions.push([tile.vertex.z, tile.vertex.y, 0.0]);
 
-                            let mut next_uvs = [ 
+                            let mut next_uvs = [
                                 // X, Y
                                 [tile.uv.x, tile.uv.w],
                                 // X, Y + 1
@@ -401,6 +420,12 @@ impl Object {
             sprite_index: None,
             position: Vec2::new(original_object.x, original_object.y),
         }
+    }
+    pub fn create(original_object: &tiled::Object, tile_gids: &HashMap<u32, u32>) -> Object {
+        // println!("obj {}", original_object.gid.to_string());
+        let mut o = Object::new(original_object);
+        o.set_tile_ids(tile_gids);
+        o
     }
     pub fn set_tile_ids(&mut self, tile_gids: &HashMap<u32, u32>) {
         self.tileset_gid = tile_gids.get(&self.gid).cloned();
@@ -570,25 +595,9 @@ pub fn process_loaded_tile_maps(
     }
 
     let mut new_meshes = HashMap::<&Handle<Map>, Vec<(u32, u32, Handle<Mesh>)>>::default();
-    // this only works if gids are uniques across all maps used
-    let mut tile_gids: HashMap<u32, u32> = Default::default();
+
     for changed_map in changed_maps.iter() {
         let map = maps.get_mut(changed_map).unwrap();
-
-        for tileset in &map.map.tilesets {
-            for i in tileset.first_gid..(tileset.first_gid + tileset.tilecount.unwrap_or(1)) {
-                tile_gids.insert(i, tileset.first_gid);
-            }
-        }
-
-        let mut object_gids: HashSet<u32> = Default::default();
-        for object_group in map.map.object_groups.iter() {
-            for object in object_group.objects.iter() {
-                tile_gids.get(&object.gid).map(|first_gid| {
-                    object_gids.insert(*first_gid);
-                });
-            }
-        }
 
         for (_, _, _, mut materials_map, mut texture_atlas_map, _) in query.iter_mut() {
             for tileset in &map.map.tilesets {
@@ -600,7 +609,8 @@ pub fn process_loaded_tile_maps(
                     materials_map.insert(tileset.first_gid, materials.add(texture_handle.clone().into()));
 
                     // only generate texture_atlas for tilesets used in objects
-                    if object_gids.contains(&tileset.first_gid) {
+                    let object_gids: Vec<_> = map.groups.iter().flat_map(|og| og.objects.iter().map(|o| o.tileset_gid)).collect();
+                    if object_gids.contains(&Some(tileset.first_gid)) {
                         // For simplicity use textureAtlasSprite for object layers
                         // these insertions should be limited to sprites referenced by objects
                         let tile_width = tileset.tile_width as f32;
@@ -682,20 +692,17 @@ pub fn process_loaded_tile_maps(
                 }
             }
 
-            for object_group in map.map.object_groups.iter() {
+            for object_group in map.groups.iter() {
                 if !object_group.visible {
                     continue;
                 }
                 // TODO: use object_group.name, opacity, colour (properties)
                 for object in object_group.objects.iter() {
                     // println!("in object_group {}, object {}, grp: {}", object_group.name, &object.id, object.gid);
-                    let mut new_object = Object::new(object);
-
-                    match &object.shape {
+                    match object.shape {
                         tiled::ObjectShape::Rect { width: _, height: _ } => {
-                            new_object.set_tile_ids(&tile_gids);
-                            new_object.tileset_gid.map(|tileset_gid| {
-                                new_object.spawn_aligned_sprite(
+                            object.tileset_gid.map(|tileset_gid| {
+                                object.spawn_aligned_sprite(
                                     commands,
                                     texture_atlas_map.get(&tileset_gid),
                                     &map.map,
