@@ -48,6 +48,7 @@ pub struct Map {
     pub map: tiled::Map,
     pub meshes: Vec<(u32, u32, Mesh)>,
     pub layers: Vec<Layer>,
+    pub groups: Vec<ObjectGroup>,
     pub tile_size: Vec2,
     pub image_folder: std::path::PathBuf,
 }
@@ -99,6 +100,7 @@ impl Map {
         let map = tiled::parse_with_path(BufReader::new(bytes.as_slice()), asset_path).unwrap();
 
         let mut layers = Vec::new();
+        let mut groups = Vec::new();
 
         let target_chunk_x = 32;
         let target_chunk_y = 32;
@@ -106,6 +108,8 @@ impl Map {
         let chunk_size_x = (map.width as f32 / target_chunk_x as f32).ceil().max(1.0) as usize;
         let chunk_size_y = (map.height as f32 / target_chunk_y as f32).ceil().max(1.0) as usize;
         let tile_size = Vec2::new(map.tile_width as f32, map.tile_height as f32);
+
+        map.object_groups.iter().for_each(|og| groups.push(ObjectGroup::new(og)));
 
         for layer in map.layers.iter() {
             if !layer.visible {
@@ -345,6 +349,7 @@ impl Map {
             map,
             meshes,
             layers,
+            groups,
             tile_size,
             image_folder: asset_path.parent().unwrap().into(),
         };
@@ -357,6 +362,27 @@ impl Map {
 pub struct TiledMapCenter(pub bool);
 
 #[derive(Debug)]
+pub struct ObjectGroup {
+    name: String,
+    opacity: f32,
+    visible: bool,
+    objects: Vec<Object>,
+}
+
+
+impl ObjectGroup {
+    pub fn new(inner: &tiled::ObjectGroup) -> ObjectGroup {
+        // println!("grp {}", inner.name.to_string());
+        ObjectGroup {
+            name: inner.name.to_string(),
+            opacity: inner.opacity,
+            visible: inner.visible,
+            objects: inner.objects.iter().map(|obj| Object::new(obj)).collect(),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Object {
     shape: tiled::ObjectShape,
     position: Vec2,
@@ -367,9 +393,10 @@ pub struct Object {
 
 impl Object {
     pub fn new(original_object: &tiled::Object) -> Object {
+        // println!("obj {}", original_object.gid.to_string());
         Object {
             shape: original_object.shape.clone(),
-            gid: original_object.gid,
+            gid: original_object.gid, // zero for most non-tile objects
             tileset_gid: None,
             sprite_index: None,
             position: Vec2::new(original_object.x, original_object.y),
