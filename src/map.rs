@@ -360,11 +360,6 @@ impl Default for TiledMapBundle {
     }
 }
 
-#[derive(Default)]
-pub struct MapResourceProviderState {
-    map_event_reader: EventReader<AssetEvent<Map>>,
-}
-
 #[derive(Bundle)]
 pub struct ChunkBundle {
     pub chunk: TileMapChunk,
@@ -408,8 +403,7 @@ impl Default for ChunkBundle {
 pub fn process_loaded_tile_maps(
     commands: &mut Commands,
     asset_server: Res<AssetServer>,
-    mut state: Local<MapResourceProviderState>,
-    map_events: Res<Events<AssetEvent<Map>>>,
+    mut map_events: EventReader<AssetEvent<Map>>,
     mut maps: ResMut<Assets<Map>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -422,7 +416,7 @@ pub fn process_loaded_tile_maps(
     )>,
 ) {
     let mut changed_maps = HashSet::<Handle<Map>>::new();
-    for event in state.map_event_reader.iter(&map_events) {
+    for event in map_events.iter() {
         match event {
             AssetEvent::Created { handle } => {
                 changed_maps.insert(handle.clone());
