@@ -623,16 +623,20 @@ pub fn process_loaded_tile_maps(
                         let columns = (texture_width / tile_width).floor() as usize;
                         let rows = (texture_height / tile_height).floor() as usize;
 
-                        let atlas = TextureAtlas::from_grid(
-                            texture_handle.clone(),
-                            Vec2::new(tile_width, tile_height),
-                            columns,
-                            rows
-                        );
-                        let atlas_handle = texture_atlases.add(atlas);
-                        for i in 0..(columns * rows) as u32 {
-                            // println!("insert: {}", tileset.first_gid + i);
-                            texture_atlas_map.insert(tileset.first_gid + i, atlas_handle.clone());
+                        let has_new = (0..(columns*rows) as u32).fold(false, |total, next | total || !texture_atlas_map.contains_key(&(tileset.first_gid + next)));
+                        if has_new {
+                            let atlas = TextureAtlas::from_grid(
+                                texture_handle.clone(),
+                                Vec2::new(tile_width, tile_height),
+                                columns,
+                                rows
+                            );
+                            let atlas_handle = texture_atlases.add(atlas);
+                            for i in 0..(columns * rows) as u32 {
+                                if texture_atlas_map.contains_key(&(tileset.first_gid + i)) { continue; }
+                                // println!("insert: {}", tileset.first_gid + i);
+                                texture_atlas_map.insert(tileset.first_gid + i, atlas_handle.clone());
+                            }
                         }
                     }
                 }
