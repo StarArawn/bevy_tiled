@@ -439,7 +439,7 @@ impl Object {
         texture_atlas: Option<&Handle<TextureAtlas>>,
         map: &tiled::Map,
         tile_map_transform: &Transform,
-    ) {
+    ) -> Option<Entity> {
         let mut map_transform = tile_map_transform.clone();
         let map_tile_width = map.tile_width as f32;
         let map_tile_height = map.tile_height as f32;
@@ -461,7 +461,7 @@ impl Object {
                         ..Default::default()
                     },
                     ..Default::default()
-                });
+                }).current_entity()
             }
             _ => {
                 panic!("Texture atlas, tilesset_gid, or sprite index missing!")
@@ -526,6 +526,7 @@ impl Default for TiledMapComponents {
 pub struct MapResourceProviderState {
     pub map_event_reader: EventReader<AssetEvent<Map>>,
     pub created_layer_entities: HashMap<u32, Vec<Entity>>,
+    pub created_object_entities: HashMap<u32, Vec<Entity>>,
 }
 
 #[derive(Bundle)]
@@ -711,6 +712,14 @@ pub fn process_loaded_tile_maps(
             }
 
             for object_group in map.groups.iter() {
+                for object in object_group.objects.iter() {
+                    state.created_object_entities.get(&object.gid).map(|entities| {
+                        // println!("Despawning previously-created object sprite");
+                        for entity in entities.iter() {
+                            commands.despawn(*entity);
+                        }
+                    });
+                }
                 if !object_group.visible {
                     continue;
                 }
@@ -720,12 +729,15 @@ pub fn process_loaded_tile_maps(
                     match object.shape {
                         tiled::ObjectShape::Rect { width: _, height: _ } => {
                             object.tileset_gid.map(|tileset_gid| {
-                                object.spawn_aligned_sprite(
+                                if let Some(entity) = object.spawn_aligned_sprite(
                                     commands,
                                     texture_atlas_map.get(&tileset_gid),
                                     &map.map,
                                     &tile_map_transform
-                                );
+                                ) {
+                                    state.created_object_entities.entry(object.gid)
+                                        .or_insert_with(|| Vec::new()).push(entity);
+                                }
                             });
                         }
                         tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
