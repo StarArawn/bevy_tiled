@@ -525,6 +525,7 @@ impl Default for TiledMapComponents {
 #[derive(Default)]
 pub struct MapResourceProviderState {
     pub map_event_reader: EventReader<AssetEvent<Map>>,
+    pub created_layer_entities: HashMap<u32, Vec<Entity>>,
 }
 
 #[derive(Bundle)]
@@ -679,7 +680,14 @@ pub fn process_loaded_tile_maps(
                                 && *tileset_guid == tileset_layer.tileset_guid
                         })
                         .collect::<Vec<_>>();
-                    for (_, _, mesh) in chunk_mesh_list.iter() {
+
+                    state.created_layer_entities.get(&tileset_layer.tileset_guid).map(|entities| {
+                        // println!("Despawning previously-created mesh for this chunk");
+                        for entity in entities.iter() {
+                            commands.despawn(*entity);
+                        }
+                    });
+                    for (_, tileset_guid, mesh) in chunk_mesh_list.iter() {
                         // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
                         // Change this once it does.
 
@@ -693,6 +701,10 @@ pub fn process_loaded_tile_maps(
                             mesh: mesh.clone(),
                             transform: tile_map_transform.clone(),
                             ..Default::default()
+                        }).current_entity().map(|new_entity| {
+                            // println!("added created_entry after spawn");
+                            state.created_layer_entities.entry(*tileset_guid)
+                                .or_insert_with(|| Vec::new()).push(new_entity);
                         });
                     }
                 }
