@@ -20,3 +20,11 @@ bevy_type_registry = "0.3"
 glam = "0.9"
 tiled = "0.9"
 # tiled = { git = "https://github.com/mattyhall/rs-tiled" }
+
+[[example]]
+name = "ortho_main"
+path = "examples/ortho_main.rs"
+
+[[example]]
+name = "iso_main"
+path = "examples/iso_main.rs"
