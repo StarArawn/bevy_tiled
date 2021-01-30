@@ -115,14 +115,14 @@ impl Map {
 
         let mut object_gids: HashSet<u32> = Default::default();
         for object_group in map.object_groups.iter() {
-            let mut tiled_o_g = ObjectGroup::new(object_group);
-            for object in object_group.objects.iter() {
-                // println!("adding {:?} to {:?}", object.gid, object_group.name);
-                tiled_o_g.objects.push(Object::create(object, &tile_gids));
-                tile_gids.get(&object.gid).map(|first_gid| {
+            // recursively creates objects in the groups:
+            let tiled_o_g = ObjectGroup::new_with_tile_ids(object_group, &tile_gids);
+            // keep track of which objects will need to have tiles loaded
+            tiled_o_g.objects.iter().for_each(|o| {
+                tile_gids.get(&o.gid).map(|first_gid| {
                     object_gids.insert(*first_gid);
                 });
-            }
+            });
             groups.push(tiled_o_g);
         }
 
@@ -393,13 +393,13 @@ pub struct ObjectGroup {
 
 
 impl ObjectGroup {
-    pub fn new(inner: &tiled::ObjectGroup) -> ObjectGroup {
+    pub fn new_with_tile_ids(inner: &tiled::ObjectGroup, tile_gids: &HashMap<u32, u32>) -> ObjectGroup {
         // println!("grp {}", inner.name.to_string());
         ObjectGroup {
             name: inner.name.to_string(),
             opacity: inner.opacity,
             visible: inner.visible,
-            objects: inner.objects.iter().map(|obj| Object::new(obj)).collect(),
+            objects: inner.objects.iter().map(|obj| Object::new_with_tile_ids(obj, tile_gids)).collect(),
         }
     }
 }
@@ -426,7 +426,7 @@ impl Object {
             name: original_object.name.clone()
         }
     }
-    pub fn create(original_object: &tiled::Object, tile_gids: &HashMap<u32, u32>) -> Object {
+    pub fn new_with_tile_ids(original_object: &tiled::Object, tile_gids: &HashMap<u32, u32>) -> Object {
         // println!("obj {}", original_object.gid.to_string());
         let mut o = Object::new(original_object);
         o.set_tile_ids(tile_gids);
