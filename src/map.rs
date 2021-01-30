@@ -407,6 +407,7 @@ impl ObjectGroup {
 pub struct Object {
     pub shape: tiled::ObjectShape,
     pub position: Vec2,
+    pub name: String,
     gid: u32, // sprite ID from tiled::Object
     tileset_gid: Option<u32>, // AKA first_gid
     sprite_index: Option<u32>,
@@ -421,7 +422,7 @@ impl Object {
             tileset_gid: None,
             sprite_index: None,
             position: Vec2::new(original_object.x, original_object.y),
-//            map_id: Handle<Map>
+            name: original_object.name.clone()
         }
     }
     pub fn create(original_object: &tiled::Object, tile_gids: &HashMap<u32, u32>) -> Object {
