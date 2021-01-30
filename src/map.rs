@@ -436,18 +436,21 @@ impl Object {
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid );
     }
     // for now this is here, but it should probably be in the consuming application?
-    pub fn spawn_aligned_sprite(&self,
-        commands: &mut Commands,
-        texture_atlas: Option<&Handle<TextureAtlas>>,
-        map: &tiled::Map,
-        tile_map_transform: &Transform,
-    ) -> Option<Entity> {
+    pub fn map_transform(&self, map: &tiled::Map, tile_map_transform: &Transform, tile_size: Option<Vec2>) -> Transform {
         let mut map_transform = tile_map_transform.clone();
         let map_tile_width = map.tile_width as f32;
         let map_tile_height = map.tile_height as f32;
         map_transform.translation -= map_transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
 
         let map_orientation: tiled::Orientation = map.orientation;
+        self.transform(&map_transform, map_orientation, tile_size)
+    }
+    pub fn spawn_aligned_sprite(&self,
+        commands: &mut Commands,
+        texture_atlas: Option<&Handle<TextureAtlas>>,
+        map: &tiled::Map,
+        tile_map_transform: &Transform,
+    ) -> Option<Entity> {
         match (texture_atlas, self.sprite_index, self.tileset_gid) {
             (Some(texture_atlas), Some(sprite_index), Some(tileset_gid)) => {
                 // this could probably be saved in the maps somewhere when texture atlas created..
@@ -456,7 +459,7 @@ impl Object {
                 }).map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
 
                 commands.spawn(SpriteSheetBundle {
-                    transform: self.transform(&map_transform, map_orientation, tile_size),
+                    transform: self.map_transform(&map, tile_map_transform, tile_size),
                     texture_atlas: texture_atlas.clone(),
                     sprite: TextureAtlasSprite {
                         index: sprite_index,
@@ -731,24 +734,39 @@ pub fn process_loaded_tile_maps(
                     // println!("in object_group {}, object {}, grp: {}", object_group.name, &object.id, object.gid);
                     match object.shape {
                         tiled::ObjectShape::Rect { width: _, height: _ } => {
-                            object.tileset_gid.map(|tileset_gid| {
-                                if let Some(entity) = object.spawn_aligned_sprite(
+                            if let Some(entity) = object.tileset_gid.and_then(|tileset_gid| {
+                                object.spawn_aligned_sprite(
                                     commands,
                                     texture_atlas_map.get(&tileset_gid),
                                     &map.map,
                                     &tile_map_transform
-                                ) {
-                                    // when done spawning, fire event
-                                    let evt = ObjectReadyEvent {
-                                        map_handle: map_handle.clone(),
-                                        entity: entity.clone()
-                                    };
-                                    ready_events.send(evt);
-
-                                    state.created_object_entities.entry(object.gid)
-                                        .or_insert_with(|| Vec::new()).push(entity);
-                                }
-                            });
+                                )
+                            }).or_else(||
+                                commands.spawn((object.map_transform(&map.map, &tile_map_transform, None), GlobalTransform::default()))
+                                    .with(object.clone())
+                                    // .spawn(SpriteBundle {
+                                    //     material: materials.add(Color::rgba(0.4, 0.4, 0.9, 0.5).into()),
+                                    //     // Don't scale here since the whole character will be scaled.
+                                    //     sprite: Sprite::new(collider_size),
+                                    //     transform: Transform::from_translation(Vec3::zero()),
+                                    //     visible: Visible {
+                                    //         is_transparent: true,
+                                    //         ..Default::default()
+                                    //     },
+                                    //     ..Default::default()
+                                    // })            
+                                    .current_entity()
+                            ) {    
+                                // when done spawning, fire event
+                                let evt = ObjectReadyEvent {
+                                    map_handle: map_handle.clone(),
+                                    entity: entity.clone()
+                                };
+                                ready_events.send(evt);
+    
+                                state.created_object_entities.entry(object.gid)
+                                    .or_insert_with(|| Vec::new()).push(entity);
+                            }
                         }
                         tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
                         tiled::ObjectShape::Polyline { points: _ } => {}
