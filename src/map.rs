@@ -117,6 +117,7 @@ impl Map {
         for object_group in map.object_groups.iter() {
             let mut tiled_o_g = ObjectGroup::new(object_group);
             for object in object_group.objects.iter() {
+                // println!("adding {:?} to {:?}", object.gid, object_group.name);
                 tiled_o_g.objects.push(Object::create(object, &tile_gids));
                 tile_gids.get(&object.gid).map(|first_gid| {
                     object_gids.insert(*first_gid);
@@ -384,7 +385,7 @@ pub struct TiledMapCenter(pub bool);
 
 #[derive(Debug)]
 pub struct ObjectGroup {
-    name: String,
+    pub name: String,
     opacity: f32,
     pub visible: bool,
     pub objects: Vec<Object>,
@@ -501,6 +502,16 @@ impl Object {
         }
 
         transform
+    }
+
+    pub fn dimensions(&self) -> Option<Vec2> {
+        match self.shape {
+            tiled::ObjectShape::Rect { width , height } |
+            tiled::ObjectShape::Ellipse { width , height } => Some(Vec2::new(width, height)),
+            tiled::ObjectShape::Polyline { points: _ } |
+            tiled::ObjectShape::Polygon { points: _ } |
+            tiled::ObjectShape::Point(_, _) => None,
+        }
     }
 }
 
@@ -741,29 +752,31 @@ pub fn process_loaded_tile_maps(
                                     &map.map,
                                     &tile_map_transform
                                 )
-                            }).or_else(||
-                                commands.spawn((object.map_transform(&map.map, &tile_map_transform, None), GlobalTransform::default()))
+                            }).or_else(|| {
+                                // commands.spawn((object.map_transform(&map.map, &tile_map_transform, None), GlobalTransform::default()))
+                                let dimensions = object.dimensions().expect("Don't know how to handle object without dimensions");
+                                commands
+                                    // Debug box.
+                                    .spawn(SpriteBundle {
+                                        material: materials.add(Color::rgba(0.4, 0.4, 0.9, 0.5).into()),
+                                        sprite: Sprite::new(dimensions),
+                                        transform: object.map_transform(&map.map, &tile_map_transform, None),
+                                        visible: Visible {
+                                            is_transparent: true,
+                                            ..Default::default()
+                                        },
+                                        ..Default::default()
+                                    })
                                     .with(object.clone())
-                                    // .spawn(SpriteBundle {
-                                    //     material: materials.add(Color::rgba(0.4, 0.4, 0.9, 0.5).into()),
-                                    //     // Don't scale here since the whole character will be scaled.
-                                    //     sprite: Sprite::new(collider_size),
-                                    //     transform: Transform::from_translation(Vec3::zero()),
-                                    //     visible: Visible {
-                                    //         is_transparent: true,
-                                    //         ..Default::default()
-                                    //     },
-                                    //     ..Default::default()
-                                    // })            
                                     .current_entity()
-                            ) {    
+                            }) {
                                 // when done spawning, fire event
                                 let evt = ObjectReadyEvent {
                                     map_handle: map_handle.clone(),
                                     entity: entity.clone()
                                 };
                                 ready_events.send(evt);
-    
+
                                 state.created_object_entities.entry(object.gid)
                                     .or_insert_with(|| Vec::new()).push(entity);
                             }
