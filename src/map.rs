@@ -555,6 +555,19 @@ impl Object {
     }
 }
 
+pub struct DebugConfig {
+    pub enabled: bool,
+    pub material: Handle<ColorMaterial>,
+}
+
+impl Default for DebugConfig {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            material: Default::default(),
+        }
+    }
+}
 
 /// A bundle of tiled map entities.
 #[derive(Bundle)]
@@ -564,6 +577,7 @@ pub struct TiledMapComponents {
     pub atlases: HashMap<u32, Handle<TextureAtlas>>,
     pub origin: Transform,
     pub center: TiledMapCenter,
+    pub debug_config: DebugConfig,
 }
 
 impl Default for TiledMapComponents {
@@ -574,6 +588,7 @@ impl Default for TiledMapComponents {
             atlases: HashMap::default(),
             center: TiledMapCenter::default(),
             origin: Transform::default(),
+            debug_config: Default::default(),
         }
     }
 }
