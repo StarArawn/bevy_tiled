@@ -437,14 +437,16 @@ impl Object {
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid );
     }
 
-    pub fn transform_from_map(&self, map: &tiled::Map, tile_transform: &Transform, extra_scale: Option<Vec3>) -> Transform {
+    pub fn transform_from_map(&self, map: &tiled::Map, map_transform: &Transform, tile_scale: Option<Vec3>) -> Transform {
+        // tile scale being None means this is not a tile object
+
         // clone entire map transform
-        let mut transform = tile_transform.clone();
+        let mut transform = map_transform.clone();
 
         let map_tile_width = map.tile_width as f32;
         let map_tile_height = map.tile_height as f32;
         // offset transform position by 1/2 map tile
-        transform.translation -= tile_transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
+        transform.translation -= map_transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
 
         let map_orientation: tiled::Orientation = map.orientation;
         // replacing map Z with something far in front for objects -- should probably be configurable
@@ -454,14 +456,25 @@ impl Object {
             tiled::ObjectShape::Rect { width, height } => {
                 match map_orientation {
                     tiled::Orientation::Orthogonal => {
-                        // object scale based on map scale, sometimes modified by passed-in scale from tile dimensions
-                        transform.scale = extra_scale.unwrap_or(Vec3::new(1.0, 1.0, 1.0)) * transform.scale;
-                        // apply map scale to object position
-                        let mut center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0);
-                        center *= tile_transform.scale.truncate();
+                        let mut center_offset = Vec2::new(self.position.x , -self.position.y );
+                        match tile_scale {
+                            None => {
+                                // shape object x/y represent top left corner
+                                center_offset += Vec2::new(width, -height) / 2.0;
+                            }
+                            Some(tile_scale) => {
+                                // tile object x/y represents bottom left corner
+                                center_offset += Vec2::new(width , height) / 2.0;
+                                // tile object scale based on map scale and passed-in scale from image dimensions
+                                transform.scale = tile_scale * transform.scale;
+                            }
+                        }
+                        // apply map scale to object position, if this is a tile
+                        center_offset *= map_transform.scale.truncate();
                         // offset transform by object position
-                        transform.translation += center.extend(z_relative_to_map - center.y / 2000.0 ); // only support up to 20k pixels maps
-                        
+                        transform.translation += center_offset.extend(z_relative_to_map - center_offset.y / 2000.0 );
+                        // ^ HACK only support up to 20k pixels maps, TODO: configure in API
+
                     }
                     // tiled::Orientation::Isometric => {
                     // }
@@ -487,22 +500,22 @@ impl Object {
         if let Some(texture_atlas) = texture_atlas {
             let sprite_index = self.sprite_index.expect("missing sprite index");
             let tileset_gid = self.tileset_gid.expect("missing tileset");
-            
+
             // fetch tile for this object if it exists
             let object_tile_size = map.tilesets.iter().find(|ts| {
                 ts.first_gid == tileset_gid
             }).map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
             // object dimensions
             let dims = self.dimensions();
-            // use object dimensions to determine extra scale (tile objects might have been resized)
-            let extra_scale = if let (Some(dims), Some(size)) = (dims, object_tile_size) {
+            // use object dimensions and tile size to determine extra scale to apply for tile objects
+            let tile_scale = if let (Some(dims), Some(size)) = (dims, object_tile_size) {
                 Some((dims / size).extend(1.0))
             } else {
                 None
             };
 
             commands.spawn(SpriteSheetBundle {
-                    transform: self.transform_from_map(&map, tile_map_transform, extra_scale),
+                    transform: self.transform_from_map(&map, tile_map_transform, tile_scale),
                     texture_atlas: texture_atlas.clone(),
                     sprite: TextureAtlasSprite {
                         index: sprite_index,
@@ -512,12 +525,9 @@ impl Object {
                 })
                 .with(self.clone())
         } else {
-            println!("Spawning debug {:?}", self);
             // commands.spawn((self.map_transform(&map.map, &tile_map_transform, None), GlobalTransform::default()))
             let dimensions = self.dimensions().expect("Don't know how to handle object without dimensions");
-            println!("dim {:?}", dimensions);
             let transform = self.transform_from_map(&map, &tile_map_transform, None);
-            println!("tform {:?}", transform);
             commands
                 // Debug box.
                 .spawn(SpriteBundle {
