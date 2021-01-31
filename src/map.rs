@@ -438,28 +438,34 @@ impl Object {
     }
 
     pub fn transform_from_map(&self, map: &tiled::Map, tile_transform: &Transform, extra_scale: Option<Vec3>) -> Transform {
+        // clone entire map transform
         let mut transform = tile_transform.clone();
+
         let map_tile_width = map.tile_width as f32;
         let map_tile_height = map.tile_height as f32;
-        transform.translation -= transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
+        // offset transform position by 1/2 map tile
+        transform.translation -= tile_transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
 
         let map_orientation: tiled::Orientation = map.orientation;
         // replacing map Z with something far in front for objects -- should probably be configurable
         // transform.translation.z = 1000.0;
+        let z_relative_to_map = 15.0; // used for a range of 5-25 above tile Z coordinate for items (max 20k map)
         match self.shape {
             tiled::ObjectShape::Rect { width, height } => {
                 match map_orientation {
                     tiled::Orientation::Orthogonal => {
-                        let mut center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0);
+                        // object scale based on map scale, sometimes modified by passed-in scale from tile dimensions
+                        transform.scale = extra_scale.unwrap_or(Vec3::new(1.0, 1.0, 1.0)) * transform.scale;
                         // apply map scale to object position
-                        center *= transform.scale.truncate();
-                        // multiply scale from max dimension of map scale with object-specific (sometimes from tile dims)
-                        transform.scale = extra_scale.unwrap_or(Vec3::new(1.0, 1.0, 1.0)) * transform.scale.max_element();
-                        transform.translation += center.extend(-center.y / 100.0); // for layering properly, up = farther back
+                        let mut center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0);
+                        center *= tile_transform.scale.truncate();
+                        // offset transform by object position
+                        transform.translation += center.extend(z_relative_to_map - center.y / 2000.0 ); // only support up to 20k pixels maps
+                        
                     }
                     // tiled::Orientation::Isometric => {
                     // }
-                    _ => panic!("Unsupported orientation {:?}", map_orientation),
+                    _ => panic!("Unsupported orientation for object {:?}", map_orientation),
                 }
             }
             tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
@@ -506,14 +512,18 @@ impl Object {
                 })
                 .with(self.clone())
         } else {
+            println!("Spawning debug {:?}", self);
             // commands.spawn((self.map_transform(&map.map, &tile_map_transform, None), GlobalTransform::default()))
             let dimensions = self.dimensions().expect("Don't know how to handle object without dimensions");
+            println!("dim {:?}", dimensions);
+            let transform = self.transform_from_map(&map, &tile_map_transform, None);
+            println!("tform {:?}", transform);
             commands
                 // Debug box.
                 .spawn(SpriteBundle {
                     material: debug_material,
                     sprite: Sprite::new(dimensions),
-                    transform: self.transform_from_map(&map, &tile_map_transform, None),
+                    transform,
                     visible: Visible {
                         is_transparent: true,
                         ..Default::default()
