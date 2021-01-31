@@ -437,14 +437,38 @@ impl Object {
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid );
     }
 
-    pub fn map_transform(&self, map: &tiled::Map, tile_map_transform: &Transform, tile_size: Option<Vec2>) -> Transform {
-        let mut map_transform = tile_map_transform.clone();
+    pub fn transform_from_map(&self, map: &tiled::Map, tile_transform: &Transform, extra_scale: Option<Vec3>) -> Transform {
+        let mut transform = tile_transform.clone();
         let map_tile_width = map.tile_width as f32;
         let map_tile_height = map.tile_height as f32;
-        map_transform.translation -= map_transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
+        transform.translation -= transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
 
         let map_orientation: tiled::Orientation = map.orientation;
-        self.transform(&map_transform, map_orientation, tile_size)
+        // replacing map Z with something far in front for objects -- should probably be configurable
+        // transform.translation.z = 1000.0;
+        match self.shape {
+            tiled::ObjectShape::Rect { width, height } => {
+                match map_orientation {
+                    tiled::Orientation::Orthogonal => {
+                        let mut center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0);
+                        // apply map scale to object position
+                        center *= transform.scale.truncate();
+                        // multiply scale from max dimension of map scale with object-specific (sometimes from tile dims)
+                        transform.scale = extra_scale.unwrap_or(Vec3::new(1.0, 1.0, 1.0)) * transform.scale.max_element();
+                        transform.translation += center.extend(-center.y / 100.0); // for layering properly, up = farther back
+                    }
+                    // tiled::Orientation::Isometric => {
+                    // }
+                    _ => panic!("Unsupported orientation {:?}", map_orientation),
+                }
+            }
+            tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
+            tiled::ObjectShape::Polyline { points: _ } => {}
+            tiled::ObjectShape::Polygon { points: _ } => {}
+            tiled::ObjectShape::Point(_, _) => {}
+        }
+        transform
+
     }
 
     pub fn spawn<'a>(&self,
@@ -457,13 +481,22 @@ impl Object {
         if let Some(texture_atlas) = texture_atlas {
             let sprite_index = self.sprite_index.expect("missing sprite index");
             let tileset_gid = self.tileset_gid.expect("missing tileset");
-            // this could probably be saved in the maps somewhere when texture atlas created..
-            let tile_size = map.tilesets.iter().find(|ts| {
+            
+            // fetch tile for this object if it exists
+            let object_tile_size = map.tilesets.iter().find(|ts| {
                 ts.first_gid == tileset_gid
             }).map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
+            // object dimensions
+            let dims = self.dimensions();
+            // use object dimensions to determine extra scale (tile objects might have been resized)
+            let extra_scale = if let (Some(dims), Some(size)) = (dims, object_tile_size) {
+                Some((dims / size).extend(1.0))
+            } else {
+                None
+            };
 
             commands.spawn(SpriteSheetBundle {
-                    transform: self.map_transform(&map, tile_map_transform, tile_size),
+                    transform: self.transform_from_map(&map, tile_map_transform, extra_scale),
                     texture_atlas: texture_atlas.clone(),
                     sprite: TextureAtlasSprite {
                         index: sprite_index,
@@ -480,7 +513,7 @@ impl Object {
                 .spawn(SpriteBundle {
                     material: debug_material,
                     sprite: Sprite::new(dimensions),
-                    transform: self.map_transform(&map, &tile_map_transform, None),
+                    transform: self.transform_from_map(&map, &tile_map_transform, None),
                     visible: Visible {
                         is_transparent: true,
                         ..Default::default()
@@ -489,35 +522,6 @@ impl Object {
                 })
                 .with(self.clone())
         }
-    }
-    fn transform(&self, map_transform: &Transform, map_orientation: tiled::Orientation, tile_size: Option<Vec2>) -> Transform{
-        let mut transform = map_transform.clone();
-        // replacing map Z with something far in front for objects -- should probably be configurable
-        // transform.translation.z = 1000.0;
-        match self.shape {
-            tiled::ObjectShape::Rect { width, height } => {
-                let scale = tile_size.map(|ts| { Vec2::new(width, height) / ts });
-                match map_orientation {
-                    tiled::Orientation::Orthogonal => {
-                        let mut center = Vec2::new(self.position.x + width / 2.0, -self.position.y + height / 2.0);
-                        // apply map scale to object position
-                        center *= transform.scale.truncate();
-                        // replace scale with scale provided by object height/width - allow nonuniform (skew) with max original
-                        transform.scale = scale.unwrap_or(Vec2::new(1.0, 1.0)).extend(1.0) * transform.scale.max_element();
-                        transform.translation += center.extend(-center.y / 100.0); // for layering properly, up = farther back
-                    }
-                    // tiled::Orientation::Isometric => {
-                    // }
-                    _ => panic!("Unsupported orientation {:?}", map_orientation),
-                }
-            }
-            tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
-            tiled::ObjectShape::Polyline { points: _ } => {}
-            tiled::ObjectShape::Polygon { points: _ } => {}
-            tiled::ObjectShape::Point(_, _) => {}
-        }
-
-        transform
     }
 
     pub fn dimensions(&self) -> Option<Vec2> {
