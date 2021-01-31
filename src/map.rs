@@ -436,7 +436,7 @@ impl Object {
         self.tileset_gid = tile_gids.get(&self.gid).cloned();
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid );
     }
-    // for now this is here, but it should probably be in the consuming application?
+
     pub fn map_transform(&self, map: &tiled::Map, tile_map_transform: &Transform, tile_size: Option<Vec2>) -> Transform {
         let mut map_transform = tile_map_transform.clone();
         let map_tile_width = map.tile_width as f32;
@@ -446,20 +446,23 @@ impl Object {
         let map_orientation: tiled::Orientation = map.orientation;
         self.transform(&map_transform, map_orientation, tile_size)
     }
-    pub fn spawn_aligned_sprite(&self,
-        commands: &mut Commands,
+
+    pub fn spawn<'a>(&self,
+        commands: &'a mut Commands,
         texture_atlas: Option<&Handle<TextureAtlas>>,
         map: &tiled::Map,
         tile_map_transform: &Transform,
-    ) -> Option<Entity> {
-        match (texture_atlas, self.sprite_index, self.tileset_gid) {
-            (Some(texture_atlas), Some(sprite_index), Some(tileset_gid)) => {
-                // this could probably be saved in the maps somewhere when texture atlas created..
-                let tile_size = map.tilesets.iter().find(|ts| {
-                    ts.first_gid == tileset_gid
-                }).map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
+        debug_material: Handle<ColorMaterial>,
+    ) -> &'a mut Commands {
+        if let Some(texture_atlas) = texture_atlas {
+            let sprite_index = self.sprite_index.expect("missing sprite index");
+            let tileset_gid = self.tileset_gid.expect("missing tileset");
+            // this could probably be saved in the maps somewhere when texture atlas created..
+            let tile_size = map.tilesets.iter().find(|ts| {
+                ts.first_gid == tileset_gid
+            }).map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
 
-                commands.spawn(SpriteSheetBundle {
+            commands.spawn(SpriteSheetBundle {
                     transform: self.map_transform(&map, tile_map_transform, tile_size),
                     texture_atlas: texture_atlas.clone(),
                     sprite: TextureAtlasSprite {
@@ -467,11 +470,24 @@ impl Object {
                         ..Default::default()
                     },
                     ..Default::default()
-                }).with(self.clone()).current_entity()
-            }
-            _ => {
-                panic!("Texture atlas, tilesset_gid, or sprite index missing!")
-            }
+                })
+                .with(self.clone())
+        } else {
+            // commands.spawn((self.map_transform(&map.map, &tile_map_transform, None), GlobalTransform::default()))
+            let dimensions = self.dimensions().expect("Don't know how to handle object without dimensions");
+            commands
+                // Debug box.
+                .spawn(SpriteBundle {
+                    material: debug_material,
+                    sprite: Sprite::new(dimensions),
+                    transform: self.map_transform(&map, &tile_map_transform, None),
+                    visible: Visible {
+                        is_transparent: true,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                })
+                .with(self.clone())
         }
     }
     fn transform(&self, map_transform: &Transform, map_orientation: tiled::Orientation, tile_size: Option<Vec2>) -> Transform{
@@ -743,49 +759,29 @@ pub fn process_loaded_tile_maps(
                 // TODO: use object_group.name, opacity, colour (properties)
                 for object in object_group.objects.iter() {
                     // println!("in object_group {}, object {}, grp: {}", object_group.name, &object.id, object.gid);
-                    match object.shape {
-                        tiled::ObjectShape::Rect { width: _, height: _ } => {
-                            if let Some(entity) = object.tileset_gid.and_then(|tileset_gid| {
-                                object.spawn_aligned_sprite(
-                                    commands,
-                                    texture_atlas_map.get(&tileset_gid),
-                                    &map.map,
-                                    &tile_map_transform
-                                )
-                            }).or_else(|| {
-                                // commands.spawn((object.map_transform(&map.map, &tile_map_transform, None), GlobalTransform::default()))
-                                let dimensions = object.dimensions().expect("Don't know how to handle object without dimensions");
-                                commands
-                                    // Debug box.
-                                    .spawn(SpriteBundle {
-                                        material: materials.add(Color::rgba(0.4, 0.4, 0.9, 0.5).into()),
-                                        sprite: Sprite::new(dimensions),
-                                        transform: object.map_transform(&map.map, &tile_map_transform, None),
-                                        visible: Visible {
-                                            is_transparent: true,
-                                            ..Default::default()
-                                        },
-                                        ..Default::default()
-                                    })
-                                    .with(object.clone())
-                                    .current_entity()
-                            }) {
-                                // when done spawning, fire event
-                                let evt = ObjectReadyEvent {
-                                    map_handle: map_handle.clone(),
-                                    entity: entity.clone()
-                                };
-                                ready_events.send(evt);
+                    let atlas_handle = object.tileset_gid.and_then(|tileset_gid|
+                        texture_atlas_map.get(&tileset_gid)
+                    );
 
-                                state.created_object_entities.entry(object.gid)
-                                    .or_insert_with(|| Vec::new()).push(entity);
-                            }
-                        }
-                        tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
-                        tiled::ObjectShape::Polyline { points: _ } => {}
-                        tiled::ObjectShape::Polygon { points: _ } => {}
-                        tiled::ObjectShape::Point(_, _) => {}
-                    }
+                    let debug_material = materials.add(Color::rgba(0.4, 0.4, 0.9, 0.5).into());
+                    object.spawn(
+                            commands,
+                            atlas_handle,
+                            &map.map,
+                            &tile_map_transform,
+                            debug_material,
+                        )
+                        .current_entity().map(|entity| {
+                            // when done spawning, fire event
+                            let evt = ObjectReadyEvent {
+                                map_handle: map_handle.clone(),
+                                entity: entity.clone()
+                            };
+                            ready_events.send(evt);
+
+                            state.created_object_entities.entry(object.gid)
+                                .or_insert_with(|| Vec::new()).push(entity);
+                        });
                 }
             }
         }
