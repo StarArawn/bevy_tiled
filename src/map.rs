@@ -426,6 +426,11 @@ impl Object {
             name: original_object.name.clone()
         }
     }
+
+    pub fn is_shape(&self) -> bool {
+        self.tileset_gid.is_none()
+    }
+
     pub fn new_with_tile_ids(original_object: &tiled::Object, tile_gids: &HashMap<u32, u32>) -> Object {
         // println!("obj {}", original_object.gid.to_string());
         let mut o = Object::new(original_object);
