@@ -557,7 +557,7 @@ impl Object {
 
 pub struct DebugConfig {
     pub enabled: bool,
-    pub material: Handle<ColorMaterial>,
+    pub material: Option<Handle<ColorMaterial>>,
 }
 
 impl Default for DebugConfig {
@@ -651,6 +651,7 @@ pub fn process_loaded_tile_maps(
         &mut HashMap<u32, Handle<ColorMaterial>>,
         &mut HashMap<u32, Handle<TextureAtlas>>,
         &Transform,
+        &DebugConfig,
     )>,
 ) {
     let mut changed_maps = HashSet::<Handle<Map>>::default();
@@ -675,7 +676,7 @@ pub fn process_loaded_tile_maps(
     for changed_map in changed_maps.iter() {
         let map = maps.get_mut(changed_map).unwrap();
 
-        for (_, _, _, mut materials_map, mut texture_atlas_map, _) in query.iter_mut() {
+        for (_, _, _, mut materials_map, mut texture_atlas_map, _, _) in query.iter_mut() {
             for tileset in &map.map.tilesets {
                 if !materials_map.contains_key(&tileset.first_gid) {
                     let texture_path = map
@@ -730,7 +731,7 @@ pub fn process_loaded_tile_maps(
         }
     }
 
-    for (_, center, map_handle, materials_map, texture_atlas_map, origin) in query.iter_mut() {
+    for (_, center, map_handle, materials_map, texture_atlas_map, origin, debug_config) in query.iter_mut() {
         if new_meshes.contains_key(map_handle) {
             let map = maps.get(map_handle).unwrap();
 
@@ -785,6 +786,7 @@ pub fn process_loaded_tile_maps(
                 }
             }
 
+            let debug_material = debug_config.material.clone().unwrap_or_else(|| materials.add(ColorMaterial::from(Color::rgba(0.4, 0.4, 0.9, 0.5))));
             for object_group in map.groups.iter() {
                 for object in object_group.objects.iter() {
                     state.created_object_entities.remove(&object.gid).map(|entities| {
@@ -805,13 +807,12 @@ pub fn process_loaded_tile_maps(
                         texture_atlas_map.get(&tileset_gid)
                     );
 
-                    let debug_material = materials.add(Color::rgba(0.4, 0.4, 0.9, 0.5).into());
                     object.spawn(
                             commands,
                             atlas_handle,
                             &map.map,
                             &tile_map_transform,
-                            debug_material,
+                            debug_material.clone(),
                         )
                         .current_entity().map(|entity| {
                             // when done spawning, fire event
