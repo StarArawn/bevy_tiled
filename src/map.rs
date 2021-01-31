@@ -580,9 +580,9 @@ impl Default for TiledMapComponents {
 
 #[derive(Default)]
 pub struct MapResourceProviderState {
-    pub map_event_reader: EventReader<AssetEvent<Map>>,
-    pub created_layer_entities: HashMap<u32, Vec<Entity>>,
-    pub created_object_entities: HashMap<u32, Vec<Entity>>,
+    map_event_reader: EventReader<AssetEvent<Map>>,
+    created_layer_entities: HashMap<u32, Vec<Entity>>,
+    created_object_entities: HashMap<u32, Vec<Entity>>,
 }
 
 #[derive(Bundle)]
@@ -739,9 +739,11 @@ pub fn process_loaded_tile_maps(
                         })
                         .collect::<Vec<_>>();
 
-                    state.created_layer_entities.get(&tileset_layer.tileset_guid).map(|entities| {
+                    // removing entities consumes the record of created entities
+                    state.created_layer_entities.remove(&tileset_layer.tileset_guid).map(|entities| {
                         // println!("Despawning previously-created mesh for this chunk");
                         for entity in entities.iter() {
+                            // println!("calling despawn on {:?}", entity);
                             commands.despawn(*entity);
                         }
                     });
@@ -770,9 +772,10 @@ pub fn process_loaded_tile_maps(
 
             for object_group in map.groups.iter() {
                 for object in object_group.objects.iter() {
-                    state.created_object_entities.get(&object.gid).map(|entities| {
+                    state.created_object_entities.remove(&object.gid).map(|entities| {
                         // println!("Despawning previously-created object sprite");
                         for entity in entities.iter() {
+                            // println!("calling despawn on {:?}", entity);
                             commands.despawn(*entity);
                         }
                     });
