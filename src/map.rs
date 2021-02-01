@@ -409,6 +409,7 @@ pub struct Object {
     pub shape: tiled::ObjectShape,
     pub position: Vec2,
     pub name: String,
+    visible: bool,
     gid: u32, // sprite ID from tiled::Object
     tileset_gid: Option<u32>, // AKA first_gid
     sprite_index: Option<u32>,
@@ -416,10 +417,11 @@ pub struct Object {
 
 impl Object {
     pub fn new(original_object: &tiled::Object) -> Object {
-        // println!("obj {}", original_object.gid.to_string());
+        // println!("obj {} {}", original_object.name, original_object.visible.to_string());
         Object {
             shape: original_object.shape.clone(),
             gid: original_object.gid, // zero for most non-tile objects
+            visible: original_object.visible,
             tileset_gid: None,
             sprite_index: None,
             position: Vec2::new(original_object.x, original_object.y),
@@ -524,6 +526,11 @@ impl Object {
                     texture_atlas: texture_atlas.clone(),
                     sprite: TextureAtlasSprite {
                         index: sprite_index,
+                        ..Default::default()
+                    },
+                    visible: Visible {
+                        is_visible: self.visible.clone(),
+                        is_transparent: true,
                         ..Default::default()
                     },
                     ..Default::default()
