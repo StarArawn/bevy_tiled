@@ -409,7 +409,7 @@ pub struct Object {
     pub shape: tiled::ObjectShape,
     pub position: Vec2,
     pub name: String,
-    visible: bool,
+    pub visible: bool,
     gid: u32, // sprite ID from tiled::Object
     tileset_gid: Option<u32>, // AKA first_gid
     sprite_index: Option<u32>,
