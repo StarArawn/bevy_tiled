@@ -18,7 +18,7 @@ fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
             origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
             ..Default::default()
         })
-        .spawn(Camera2dBundle::default());
+        .spawn(OrthographicCameraBundle::new_2d());
 }
 
 fn camera_movement(
