@@ -609,7 +609,7 @@ impl Default for TiledMapComponents {
 #[derive(Default)]
 pub struct MapResourceProviderState {
     map_event_reader: EventReader<AssetEvent<Map>>,
-    created_layer_entities: HashMap<u32, Vec<Entity>>,
+    created_layer_entities: HashMap<(usize, u32), Vec<Entity>>, // maps layer id and tileset_gid to mesh entities
     created_object_entities: HashMap<u32, Vec<Entity>>,
 }
 
@@ -769,7 +769,7 @@ pub fn process_loaded_tile_maps(
                         .collect::<Vec<_>>();
 
                     // removing entities consumes the record of created entities
-                    state.created_layer_entities.remove(&tileset_layer.tileset_guid).map(|entities| {
+                    state.created_layer_entities.remove(&(layer_id, tileset_layer.tileset_guid)).map(|entities| {
                         // println!("Despawning previously-created mesh for this chunk");
                         for entity in entities.iter() {
                             // println!("calling despawn on {:?}", entity);
@@ -792,7 +792,7 @@ pub fn process_loaded_tile_maps(
                             ..Default::default()
                         }).current_entity().map(|new_entity| {
                             // println!("added created_entry after spawn");
-                            state.created_layer_entities.entry(*tileset_guid)
+                            state.created_layer_entities.entry((layer_id, *tileset_guid))
                                 .or_insert_with(|| Vec::new()).push(new_entity);
                         });
                     }
