@@ -2290,7 +2290,7 @@ checksum = "7572415bd688d401c52f6e36f4c8e805b9ae1622619303b9fa835d531db0acae"
 [[package]]
 name = "tiled"
 version = "0.9.3"
-source = "git+https://github.com/rparrett/rs-tiled#3533adf0580b05bca87fd7bd77a0384e9ecff9f2"
+source = "git+https://github.com/mattyhall/rs-tiled?rev=19c311231f1809491583c1e8e45b142d8ca3fa80#19c311231f1809491583c1e8e45b142d8ca3fa80"
 dependencies = [
  "base64 0.10.1",
  "libflate",

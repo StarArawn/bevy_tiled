@@ -30,4 +30,4 @@ web = [
 [dependencies]
 anyhow = "1.0"
 bevy = { git = "https://github.com/bevyengine/bevy/", rev="1ca8ce4a799af8dab2d926366de9ac3c8d30939c", default-features=false }
-tiled = { git = "https://github.com/rparrett/rs-tiled", default-features = false }
+tiled = { git = "https://github.com/mattyhall/rs-tiled", rev="19c311231f1809491583c1e8e45b142d8ca3fa80", default-features = false }
