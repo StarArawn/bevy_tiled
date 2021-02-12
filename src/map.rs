@@ -10,7 +10,7 @@ use bevy_reflect::TypeUuid;
 
 use crate::{loader::TiledMapLoader, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 use glam::Vec2;
-use std::{io::BufReader, path::Path};
+use std::{io::BufReader, path::{Path, PathBuf}};
 
 pub use tiled::ObjectShape;
 
@@ -53,6 +53,7 @@ pub struct Map {
     pub groups: Vec<ObjectGroup>,
     pub tile_size: Vec2,
     pub image_folder: std::path::PathBuf,
+    pub asset_dependencies: Vec<PathBuf>,
 }
 
 impl Map {
@@ -132,6 +133,8 @@ impl Map {
         let chunk_size_x = (map.width as f32 / target_chunk_x as f32).ceil().max(1.0) as usize;
         let chunk_size_y = (map.height as f32 / target_chunk_y as f32).ceil().max(1.0) as usize;
         let tile_size = Vec2::new(map.tile_width as f32, map.tile_height as f32);
+        let image_folder: PathBuf = asset_path.parent().unwrap().into();
+        let mut asset_dependencies = Vec::new();
 
         for layer in map.layers.iter() {
             if !layer.visible {
@@ -146,6 +149,9 @@ impl Map {
                 let texture_width = image.width as f32;
                 let texture_height = image.height as f32;
                 let columns = (texture_width / tile_width).floor();
+
+                let tile_path = image_folder.join(tileset.images.first().unwrap().source.as_str());
+                asset_dependencies.push(tile_path);
 
                 let mut chunks = Vec::new();
                 // 32 x 32 tile chunk sizes
@@ -373,7 +379,8 @@ impl Map {
             layers,
             groups,
             tile_size,
-            image_folder: asset_path.parent().unwrap().into(),
+            image_folder,
+            asset_dependencies,
         };
 
         Ok(map)
