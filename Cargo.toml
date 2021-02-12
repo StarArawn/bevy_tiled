@@ -19,4 +19,4 @@ bevy = "0.4.0"
 bevy_reflect = "0.4.0"
 glam = "0.11.2"
 #tiled = "0.9"
-tiled = { git = "https://github.com/dmtaub/rs-tiled", branch = "patch-1" }
+tiled = { git = "https://github.com/mattyhall/rs-tiled", branch = "master" }

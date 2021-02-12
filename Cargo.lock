@@ -3320,8 +3320,7 @@ dependencies = [
 [[package]]
 name = "tiled"
 version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "162eb47ee963888a04affec76e698b93e30dd782f983c21be42423ff3aaccefe"
+source = "git+https://github.com/mattyhall/rs-tiled?branch=master#19c311231f1809491583c1e8e45b142d8ca3fa80"
 dependencies = [
  "base64 0.10.1",
  "libflate",
