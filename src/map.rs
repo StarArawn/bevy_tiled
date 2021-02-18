@@ -527,7 +527,6 @@ impl Object {
             } else {
                 None
             };
-
             commands.spawn(SpriteSheetBundle {
                     transform: self.transform_from_map(&map, tile_map_transform, tile_scale),
                     texture_atlas: texture_atlas.clone(),
@@ -536,7 +535,7 @@ impl Object {
                         ..Default::default()
                     },
                     visible: Visible {
-                        is_visible: self.visible.clone(),
+                        is_visible: self.visible,
                         is_transparent: true,
                         ..Default::default()
                     },
@@ -598,6 +597,7 @@ pub struct TiledMapComponents {
     pub origin: Transform,
     pub center: TiledMapCenter,
     pub debug_config: DebugConfig,
+    pub created_entities: CreatedMapEntities,
 }
 
 impl Default for TiledMapComponents {
@@ -609,6 +609,7 @@ impl Default for TiledMapComponents {
             center: TiledMapCenter::default(),
             origin: Transform::default(),
             debug_config: Default::default(),
+            created_entities: Default::default()
         }
     }
 }
@@ -616,7 +617,13 @@ impl Default for TiledMapComponents {
 #[derive(Default)]
 pub struct MapResourceProviderState {
     map_event_reader: EventReader<AssetEvent<Map>>,
-    created_layer_entities: HashMap<(usize, u32), Vec<Entity>>, // maps layer id and tileset_gid to mesh entities
+}
+
+#[derive(Default, Debug)]
+pub struct CreatedMapEntities {
+    // maps layer id and tileset_gid to mesh entities
+    created_layer_entities: HashMap<(usize, u32), Vec<Entity>>,
+    // maps object guid to texture atlas sprite entity
     created_object_entities: HashMap<u32, Vec<Entity>>,
 }
 
@@ -672,6 +679,7 @@ pub fn process_loaded_tile_maps(
         &mut HashMap<u32, Handle<TextureAtlas>>,
         &Transform,
         &mut DebugConfig,
+        &mut CreatedMapEntities,
     )>,
 ) {
     let mut changed_maps = HashSet::<Handle<Map>>::default();
@@ -696,7 +704,10 @@ pub fn process_loaded_tile_maps(
     for changed_map in changed_maps.iter() {
         let map = maps.get_mut(changed_map).unwrap();
 
-        for (_, _, _, mut materials_map, mut texture_atlas_map, _, _) in query.iter_mut() {
+        for (_, _, map_handle, mut materials_map, mut texture_atlas_map, _, _, _) in query.iter_mut() {
+            // only deal with currently changed map
+            if map_handle != changed_map { continue; }
+
             for tileset in &map.map.tilesets {
                 if !materials_map.contains_key(&tileset.first_gid) {
                     let texture_path = map
@@ -751,7 +762,7 @@ pub fn process_loaded_tile_maps(
         }
     }
 
-    for (_, center, map_handle, materials_map, texture_atlas_map, origin, mut debug_config) in query.iter_mut() {
+    for (_, center, map_handle, materials_map, texture_atlas_map, origin, mut debug_config, mut created_entities) in query.iter_mut() {
         if new_meshes.contains_key(map_handle) {
             let map = maps.get(map_handle).unwrap();
 
@@ -776,7 +787,7 @@ pub fn process_loaded_tile_maps(
                         .collect::<Vec<_>>();
 
                     // removing entities consumes the record of created entities
-                    state.created_layer_entities.remove(&(layer_id, tileset_layer.tileset_guid)).map(|entities| {
+                    created_entities.created_layer_entities.remove(&(layer_id, tileset_layer.tileset_guid)).map(|entities| {
                         // println!("Despawning previously-created mesh for this chunk");
                         for entity in entities.iter() {
                             // println!("calling despawn on {:?}", entity);
@@ -799,7 +810,7 @@ pub fn process_loaded_tile_maps(
                             ..Default::default()
                         }).current_entity().map(|new_entity| {
                             // println!("added created_entry after spawn");
-                            state.created_layer_entities.entry((layer_id, *tileset_guid))
+                            created_entities.created_layer_entities.entry((layer_id, *tileset_guid))
                                 .or_insert_with(|| Vec::new()).push(new_entity);
                         });
                     }
@@ -811,7 +822,7 @@ pub fn process_loaded_tile_maps(
             }
             for object_group in map.groups.iter() {
                 for object in object_group.objects.iter() {
-                    state.created_object_entities.remove(&object.gid).map(|entities| {
+                    created_entities.created_object_entities.remove(&object.gid).map(|entities| {
                         // println!("Despawning previously-created object sprite");
                         for entity in entities.iter() {
                             // println!("calling despawn on {:?}", entity);
@@ -824,7 +835,7 @@ pub fn process_loaded_tile_maps(
                 }
                 // TODO: use object_group.name, opacity, colour (properties)
                 for object in object_group.objects.iter() {
-                    // println!("in object_group {}, object {}, grp: {}", object_group.name, &object.id, object.gid);
+                    // println!("in object_group {}, object {:?}, grp: {}", object_group.name, &object.tileset_gid, object.gid);
                     let atlas_handle = object.tileset_gid.and_then(|tileset_gid|
                         texture_atlas_map.get(&tileset_gid)
                     );
@@ -844,7 +855,7 @@ pub fn process_loaded_tile_maps(
                             };
                             ready_events.send(evt);
 
-                            state.created_object_entities.entry(object.gid)
+                            created_entities.created_object_entities.entry(object.gid)
                                 .or_insert_with(|| Vec::new()).push(entity);
                         });
                 }
