@@ -457,10 +457,11 @@ impl Object {
         // clone entire map transform
         let mut transform = map_transform.clone();
 
-        let map_tile_width = map.tile_width as f32;
-        let map_tile_height = map.tile_height as f32;
-        // offset transform position by 1/2 map tile
-        transform.translation -= map_transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
+        //// this was made obsolete by Kurble's branch changes
+        // let map_tile_width = map.tile_width as f32;
+        // let map_tile_height = map.tile_height as f32;
+        //// offset transform position by 1/2 map tile
+        // transform.translation -= map_transform.scale * Vec3::new(map_tile_width, -map_tile_height, 0.0) / 2.0;
 
         let map_orientation: tiled::Orientation = map.orientation;
         // replacing map Z with something far in front for objects -- should probably be configurable
