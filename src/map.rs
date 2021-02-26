@@ -698,6 +698,7 @@ pub fn process_loaded_tile_maps(
     asset_server: Res<AssetServer>,
     mut map_events: EventReader<AssetEvent<Map>>,
     mut ready_events: EventWriter<ObjectReadyEvent>,
+    mut map_ready_events: EventWriter<MapReadyEvent>,
     mut maps: ResMut<Assets<Map>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -938,10 +939,20 @@ pub fn process_loaded_tile_maps(
                 }
             }
         }
+        let evt = MapReadyEvent {
+            map_handle: map_handle.clone(),
+        };
+        map_ready_events.send(evt);
     }
 }
+
+// events fired when entity has been created
 
 pub struct ObjectReadyEvent {
     pub map_handle: Handle<Map>,
     pub entity: Entity,
+}
+
+pub struct MapReadyEvent {
+    pub map_handle: Handle<Map>,
 }

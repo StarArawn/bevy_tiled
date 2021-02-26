@@ -17,6 +17,7 @@ impl Plugin for TiledMapPlugin {
         app.add_asset::<map::Map>()
             .init_asset_loader::<loader::TiledMapLoader>()
             .add_event::<ObjectReadyEvent>()
+            .add_event::<MapReadyEvent>()
             .add_system(process_loaded_tile_maps.system());
 
         let world = app.world_mut();
