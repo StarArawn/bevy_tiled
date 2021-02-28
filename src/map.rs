@@ -892,11 +892,11 @@ pub fn process_loaded_tile_maps(
                             chunk_entities.push(new_entity);
                         };
                     }
-                    // if parent was passed in, mark it and add children
+                    // if parent was passed in add children and mark it as MapRoot (temp until map bundle returns real entity)
                     if let Some(parent_entity) = optional_parent {
                         commands
-                            .insert(parent_entity.clone(), MapRoot)
-                            .push_children(parent_entity.clone(), &chunk_entities);
+                            .push_children(parent_entity.clone(), &chunk_entities)
+                            .insert(parent_entity.clone(), MapRoot);
                     }
                 }
             }
@@ -921,6 +921,9 @@ pub fn process_loaded_tile_maps(
                 if !object_group.visible {
                     continue;
                 }
+
+                let mut object_entities: Vec<Entity> = Default::default();
+
                 // TODO: use object_group.name, opacity, colour (properties)
                 for object in object_group.objects.iter() {
                     // println!("in object_group {}, object {:?}, grp: {}", object_group.name, &object.tileset_gid, object.gid);
@@ -951,7 +954,12 @@ pub fn process_loaded_tile_maps(
                                 .entry(object.gid)
                                 .or_insert_with(|| Vec::new())
                                 .push(entity);
+                            object_entities.push(entity);
                         });
+                }
+                // if parent was passed in add children
+                if let Some(parent_entity) = optional_parent {
+                    commands.push_children(parent_entity.clone(), &object_entities);
                 }
             }
         }
