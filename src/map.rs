@@ -515,8 +515,9 @@ impl Object {
                         // ^ HACK only support up to 20k pixels maps, TODO: configure in API
                     }
                     // tiled::Orientation::Isometric => {
+
                     // }
-                    _ => panic!("Unsupported orientation for object {:?}", map_orientation),
+                    _ => panic!("Sorry, {:?} objects aren't supported -- please hide this object layer for now.", map_orientation),
                 }
             }
             tiled::ObjectShape::Ellipse {
@@ -944,8 +945,9 @@ pub fn process_loaded_tile_maps(
                         .map(|entity| {
                             // when done spawning, fire event
                             let evt = ObjectReadyEvent {
-                                map_handle: map_handle.clone(),
                                 entity: entity.clone(),
+                                map_handle: map_handle.clone(),
+                                map_entity_option: optional_parent.clone(),
                             };
                             ready_events.send(evt);
 
@@ -965,6 +967,7 @@ pub fn process_loaded_tile_maps(
         }
         let evt = MapReadyEvent {
             map_handle: map_handle.clone(),
+            map_entity_option: optional_parent.clone(),
         };
         map_ready_events.send(evt);
     }
@@ -973,10 +976,12 @@ pub fn process_loaded_tile_maps(
 // events fired when entity has been created
 
 pub struct ObjectReadyEvent {
-    pub map_handle: Handle<Map>,
     pub entity: Entity,
+    pub map_handle: Handle<Map>,
+    pub map_entity_option: Option<Entity>,
 }
 
 pub struct MapReadyEvent {
     pub map_handle: Handle<Map>,
+    pub map_entity_option: Option<Entity>,
 }

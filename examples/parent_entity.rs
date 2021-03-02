@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_tiled_prototype::{MapRoot, TiledMapCenter};
 
-// this example demonstrates moving the map mesh entities using 
+// this example demonstrates moving the map mesh entities using
 // the MapRoot marker on a passed-in parent element
 
 const SCALE: f32 = 0.25;
@@ -16,18 +16,21 @@ fn main() {
         .run();
 }
 
-fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
-    
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // let's pass in a parent to append map tiles to
-    let parent = commands.spawn(
-        (
-            Transform { ..Default::default() },
-            GlobalTransform{ ..Default::default() }
-        )
-    ).current_entity();
+    let parent = commands
+        .spawn((
+            Transform {
+                ..Default::default()
+            },
+            GlobalTransform {
+                ..Default::default()
+            },
+        ))
+        .current_entity();
 
     commands
-        .spawn(bevy_tiled_prototype::TiledMapBundle {
+        .spawn(bevy_tiled_prototype::TiledMapComponents {
             map_asset: asset_server.load("ortho-map.tmx"),
             parent_option: parent,
             center: TiledMapCenter(true),
@@ -43,7 +46,7 @@ fn move_parent_entity(
     mut query: Query<(&MapRoot, &mut Transform)>,
 ) {
     for (_, mut transform) in query.iter_mut() {
-        let mut direction = Vec3::zero();
+        let mut direction = Vec3::ZERO;
 
         if keyboard_input.pressed(KeyCode::A) {
             direction -= Vec3::new(SCALE, 0.0, 0.0);
