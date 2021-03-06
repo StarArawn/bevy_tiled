@@ -964,12 +964,12 @@ pub fn process_loaded_tile_maps(
                     commands.push_children(parent_entity.clone(), &object_entities);
                 }
             }
+            let evt = MapReadyEvent {
+                map_handle: map_handle.clone(),
+                map_entity_option: optional_parent.clone(),
+            };
+            map_ready_events.send(evt);
         }
-        let evt = MapReadyEvent {
-            map_handle: map_handle.clone(),
-            map_entity_option: optional_parent.clone(),
-        };
-        map_ready_events.send(evt);
     }
 }
 
