@@ -16,6 +16,7 @@ impl Plugin for TiledMapPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app.add_asset::<map::Map>()
             .init_asset_loader::<loader::TiledMapLoader>()
+            .add_event::<ObjectReadyEvent>()
             .add_system(process_loaded_tile_maps.system());
 
         let resources = app.resources();

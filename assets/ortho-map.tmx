@@ -204,7 +204,7 @@
    eJzVl9lNw0AURZ8ltgr4YquAjliaYPl8DdAChCVABRB2KkBhpwK2sKQC4FgiShQ8tseMx/aVjmRLY+fO3JnnFxGRGZiVamkBFos2EaOBQGQw6N6PFmcltcbwOx50vU+neKYztsb1OmzAZq4uo9XxbjO2wfUBHMJRjt5c6RyacAlXcF2oGzu9wCu0YCohpwcPftJqFdZ+r9uGMf1nvWjtwX7P/UiEN5vzUiZRW5Qao9QarUHRftKI2qLUGKXWaCOjZ9/zprYoNUapNdrM+Hsu5m0jaotSY5Rao62M73Ax70d4gme4yOgjSb01tH/eu/947xd8izvfS7Ds6F2+VZP8e5oVx+8rY0/D90dN385QPnuapN7DZnxvT1O2HiCNqtYD2GaXt3aot9tQh62K9CJn+DyFEziuiOd7fN7BLdyUxDN5C7kL+Yf74I8+8fkB7/AGQ+zdYU/7t21YI/IWchfyD/dBoibwO1nwmSNvIXch/3AfxCopE18ibyF3If9wH8TKNhOfMq2nTSZ5yXSeTOvZn0nU83Mw78Bb1P/tUKbzlHY9k87jD20Li3Y=
   </data>
  </layer>
- <objectgroup id="3" name="Objects" visible="0">
+ <objectgroup id="3" name="Objects">
   <object id="1" name="maggots" type="location" x="435" y="74" width="155" height="99">
    <properties>
     <property name="spawncount" type="int" value="5"/>
