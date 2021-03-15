@@ -1,5 +1,7 @@
 use crate::TileMapChunk;
-use bevy::{prelude::*, render::{
+use bevy::{
+    prelude::*,
+    render::{
         pipeline::{
             BlendDescriptor, BlendFactor, BlendOperation, ColorStateDescriptor, ColorWrite,
             CompareFunction, CullMode, DepthStencilStateDescriptor, FrontFace, PipelineDescriptor,
@@ -8,7 +10,8 @@ use bevy::{prelude::*, render::{
         render_graph::{base, RenderGraph, RenderResourcesNode},
         shader::{ShaderStage, ShaderStages},
         texture::TextureFormat,
-    }};
+    },
+};
 use bevy_reflect::TypeUuid;
 
 pub const TILE_MAP_PIPELINE_HANDLE: HandleUntyped =

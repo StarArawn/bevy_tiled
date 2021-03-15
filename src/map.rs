@@ -1,17 +1,21 @@
 use anyhow::Result;
-use bevy::{prelude::*, render::mesh::Indices, render::{
-        draw::Visible,
-        mesh::VertexAttributeValues,
-        pipeline::PrimitiveTopology,
-        pipeline::RenderPipeline,
-        render_graph::base::MainPass,
-    }, utils::{HashMap, HashSet}};
+use bevy::{
+    prelude::*,
+    render::mesh::Indices,
+    render::{
+        draw::Visible, mesh::VertexAttributeValues, pipeline::PrimitiveTopology,
+        pipeline::RenderPipeline, render_graph::base::MainPass,
+    },
+    utils::{HashMap, HashSet},
+};
 use bevy_reflect::TypeUuid;
 
 use crate::{loader::TiledMapLoader, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 use glam::Vec2;
-use std::{io::BufReader, path::{Path, PathBuf}};
-
+use std::{
+    io::BufReader,
+    path::{Path, PathBuf},
+};
 
 // objects include these by default for now
 pub use tiled::ObjectShape;
@@ -195,15 +199,18 @@ impl Map {
 
                                     // This calculation is much simpler we only care about getting the remainder
                                     // and multiplying that by the tile width.
-                                    let sprite_sheet_x: f32 = ((tile % columns) * (tile_width + tile_space) - tile_space).floor();
+                                    let sprite_sheet_x: f32 =
+                                        ((tile % columns) * (tile_width + tile_space) - tile_space)
+                                            .floor();
 
                                     // Calculation here is (tile / columns).round_down * (tile_space + tile_height) - tile_space
                                     // Example: tile 30 / 28 columns = 1.0714 rounded down to 1 * 16 tile_height = 16 Y
                                     // which is the 2nd row in the sprite sheet.
                                     // Example2: tile 10 / 28 columns = 0.3571 rounded down to 0 * 16 tile_height = 0 Y
                                     // which is the 1st row in the sprite sheet.
-                                    let sprite_sheet_y: f32 =
-                                        (tile / columns).floor() * (tile_height + tile_space) - tile_space;
+                                    let sprite_sheet_y: f32 = (tile / columns).floor()
+                                        * (tile_height + tile_space)
+                                        - tile_space;
 
                                     // Calculate positions
                                     let (start_x, end_x, start_y, end_y) = match map.orientation {
@@ -214,9 +221,15 @@ impl Map {
                                                 tile_height,
                                             );
 
-                                            let start = Vec2::new(center.x, center.y - tile_height - tile_space);
+                                            let start = Vec2::new(
+                                                center.x,
+                                                center.y - tile_height - tile_space,
+                                            );
 
-                                            let end = Vec2::new(center.x + tile_width + tile_space, center.y);
+                                            let end = Vec2::new(
+                                                center.x + tile_width + tile_space,
+                                                center.y,
+                                            );
 
                                             (start.x, end.x, start.y, end.y)
                                         }
@@ -232,10 +245,8 @@ impl Map {
                                                 center.y - tile_height,
                                             );
 
-                                            let end = Vec2::new(
-                                                center.x + tile_width / 2.0,
-                                                center.y,
-                                            );
+                                            let end =
+                                                Vec2::new(center.x + tile_width / 2.0, center.y);
 
                                             (start.x, end.x, start.y, end.y)
                                         }
@@ -246,8 +257,7 @@ impl Map {
 
                                     // Calculate UV:
                                     let start_u: f32 = sprite_sheet_x / texture_width;
-                                    let end_u: f32 =
-                                        (sprite_sheet_x + tile_width) / texture_width;
+                                    let end_u: f32 = (sprite_sheet_x + tile_width) / texture_width;
                                     let start_v: f32 = sprite_sheet_y / texture_height;
                                     let end_v: f32 =
                                         (sprite_sheet_y + tile_height) / texture_height;
@@ -318,7 +328,6 @@ impl Map {
                                 continue;
                             }
 
-
                             // X, Y
                             positions.push([tile.vertex.x, tile.vertex.y, 0.0]);
                             // X, Y + 1
@@ -336,7 +345,7 @@ impl Map {
                                 // X + 1, Y + 1
                                 [tile.uv.z, tile.uv.y],
                                 // X + 1, Y
-                                [tile.uv.z, tile.uv.w]
+                                [tile.uv.z, tile.uv.w],
                             ];
                             if tile.flip_d {
                                 next_uvs.swap(0, 2);
@@ -397,15 +406,21 @@ pub struct ObjectGroup {
     pub objects: Vec<Object>,
 }
 
-
 impl ObjectGroup {
-    pub fn new_with_tile_ids(inner: &tiled::ObjectGroup, tile_gids: &HashMap<u32, u32>) -> ObjectGroup {
+    pub fn new_with_tile_ids(
+        inner: &tiled::ObjectGroup,
+        tile_gids: &HashMap<u32, u32>,
+    ) -> ObjectGroup {
         // println!("grp {}", inner.name.to_string());
         ObjectGroup {
             name: inner.name.to_string(),
             opacity: inner.opacity,
             visible: inner.visible,
-            objects: inner.objects.iter().map(|obj| Object::new_with_tile_ids(obj, tile_gids)).collect(),
+            objects: inner
+                .objects
+                .iter()
+                .map(|obj| Object::new_with_tile_ids(obj, tile_gids))
+                .collect(),
         }
     }
 }
@@ -417,7 +432,7 @@ pub struct Object {
     pub position: Vec2,
     pub name: String,
     pub visible: bool,
-    gid: u32, // sprite ID from tiled::Object
+    gid: u32,                 // sprite ID from tiled::Object
     tileset_gid: Option<u32>, // AKA first_gid
     sprite_index: Option<u32>,
 }
@@ -433,7 +448,7 @@ impl Object {
             tileset_gid: None,
             sprite_index: None,
             position: Vec2::new(original_object.x, original_object.y),
-            name: original_object.name.clone()
+            name: original_object.name.clone(),
         }
     }
 
@@ -441,7 +456,10 @@ impl Object {
         self.tileset_gid.is_none()
     }
 
-    pub fn new_with_tile_ids(original_object: &tiled::Object, tile_gids: &HashMap<u32, u32>) -> Object {
+    pub fn new_with_tile_ids(
+        original_object: &tiled::Object,
+        tile_gids: &HashMap<u32, u32>,
+    ) -> Object {
         // println!("obj {}", original_object.gid.to_string());
         let mut o = Object::new(original_object);
         o.set_tile_ids(tile_gids);
@@ -449,10 +467,15 @@ impl Object {
     }
     pub fn set_tile_ids(&mut self, tile_gids: &HashMap<u32, u32>) {
         self.tileset_gid = tile_gids.get(&self.gid).cloned();
-        self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid );
+        self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid);
     }
 
-    pub fn transform_from_map(&self, map: &tiled::Map, map_transform: &Transform, tile_scale: Option<Vec3>) -> Transform {
+    pub fn transform_from_map(
+        &self,
+        map: &tiled::Map,
+        map_transform: &Transform,
+        tile_scale: Option<Vec3>,
+    ) -> Transform {
         // tile scale being None means this is not a tile object
 
         // clone entire map transform
@@ -472,7 +495,7 @@ impl Object {
             tiled::ObjectShape::Rect { width, height } => {
                 match map_orientation {
                     tiled::Orientation::Orthogonal => {
-                        let mut center_offset = Vec2::new(self.position.x , -self.position.y );
+                        let mut center_offset = Vec2::new(self.position.x, -self.position.y);
                         match tile_scale {
                             None => {
                                 // shape object x/y represent top left corner
@@ -480,7 +503,7 @@ impl Object {
                             }
                             Some(tile_scale) => {
                                 // tile object x/y represents bottom left corner
-                                center_offset += Vec2::new(width , height) / 2.0;
+                                center_offset += Vec2::new(width, height) / 2.0;
                                 // tile object scale based on map scale and passed-in scale from image dimensions
                                 transform.scale = tile_scale * transform.scale;
                             }
@@ -488,25 +511,28 @@ impl Object {
                         // apply map scale to object position, if this is a tile
                         center_offset *= map_transform.scale.truncate();
                         // offset transform by object position
-                        transform.translation += center_offset.extend(z_relative_to_map - center_offset.y / 2000.0 );
+                        transform.translation +=
+                            center_offset.extend(z_relative_to_map - center_offset.y / 2000.0);
                         // ^ HACK only support up to 20k pixels maps, TODO: configure in API
-
                     }
                     // tiled::Orientation::Isometric => {
                     // }
                     _ => panic!("Unsupported orientation for object {:?}", map_orientation),
                 }
             }
-            tiled::ObjectShape::Ellipse { width: _ , height: _ } => {}
+            tiled::ObjectShape::Ellipse {
+                width: _,
+                height: _,
+            } => {}
             tiled::ObjectShape::Polyline { points: _ } => {}
             tiled::ObjectShape::Polygon { points: _ } => {}
             tiled::ObjectShape::Point(_, _) => {}
         }
         transform
-
     }
 
-    pub fn spawn<'a>(&self,
+    pub fn spawn<'a>(
+        &self,
         commands: &'a mut Commands,
         texture_atlas: Option<&Handle<TextureAtlas>>,
         map: &tiled::Map,
@@ -519,9 +545,11 @@ impl Object {
             let tileset_gid = self.tileset_gid.expect("missing tileset");
 
             // fetch tile for this object if it exists
-            let object_tile_size = map.tilesets.iter().find(|ts| {
-                ts.first_gid == tileset_gid
-            }).map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
+            let object_tile_size = map
+                .tilesets
+                .iter()
+                .find(|ts| ts.first_gid == tileset_gid)
+                .map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
             // object dimensions
             let dims = self.dimensions();
             // use object dimensions and tile size to determine extra scale to apply for tile objects
@@ -531,27 +559,32 @@ impl Object {
                 None
             };
             commands.spawn(SpriteSheetBundle {
-                    transform: self.transform_from_map(&map, tile_map_transform, tile_scale),
-                    texture_atlas: texture_atlas.clone(),
-                    sprite: TextureAtlasSprite {
-                        index: sprite_index,
-                        ..Default::default()
-                    },
-                    visible: Visible {
-                        is_visible: self.visible,
-                        is_transparent: true,
-                        ..Default::default()
-                    },
+                transform: self.transform_from_map(&map, tile_map_transform, tile_scale),
+                texture_atlas: texture_atlas.clone(),
+                sprite: TextureAtlasSprite {
+                    index: sprite_index,
                     ..Default::default()
-                })
+                },
+                visible: Visible {
+                    is_visible: self.visible,
+                    is_transparent: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
         } else {
             // commands.spawn((self.map_transform(&map.map, &tile_map_transform, None), GlobalTransform::default()))
-            let dimensions = self.dimensions().expect("Don't know how to handle object without dimensions");
+            let dimensions = self
+                .dimensions()
+                .expect("Don't know how to handle object without dimensions");
             let transform = self.transform_from_map(&map, &tile_map_transform, None);
             commands
                 // Debug box.
                 .spawn(SpriteBundle {
-                    material: debug_config.material.clone().unwrap_or_else(|| Handle::<ColorMaterial>::default()),
+                    material: debug_config
+                        .material
+                        .clone()
+                        .unwrap_or_else(|| Handle::<ColorMaterial>::default()),
                     sprite: Sprite::new(dimensions),
                     transform,
                     visible: Visible {
@@ -568,11 +601,11 @@ impl Object {
 
     pub fn dimensions(&self) -> Option<Vec2> {
         match self.shape {
-            tiled::ObjectShape::Rect { width , height } |
-            tiled::ObjectShape::Ellipse { width , height } => Some(Vec2::new(width, height)),
-            tiled::ObjectShape::Polyline { points: _ } |
-            tiled::ObjectShape::Polygon { points: _ } |
-            tiled::ObjectShape::Point(_, _) => Some(Vec2::splat(1.0)),
+            tiled::ObjectShape::Rect { width, height }
+            | tiled::ObjectShape::Ellipse { width, height } => Some(Vec2::new(width, height)),
+            tiled::ObjectShape::Polyline { points: _ }
+            | tiled::ObjectShape::Polygon { points: _ }
+            | tiled::ObjectShape::Point(_, _) => Some(Vec2::splat(1.0)),
         }
     }
 }
@@ -612,7 +645,7 @@ impl Default for TiledMapComponents {
             center: TiledMapCenter::default(),
             origin: Transform::default(),
             debug_config: Default::default(),
-            created_entities: Default::default()
+            created_entities: Default::default(),
         }
     }
 }
@@ -658,7 +691,7 @@ impl Default for ChunkComponents {
             mesh: Handle::default(),
             material: Handle::default(),
             render_pipeline: RenderPipelines::from_pipelines(vec![RenderPipeline::new(
-                TILE_MAP_PIPELINE_HANDLE.typed()
+                TILE_MAP_PIPELINE_HANDLE.typed(),
             )]),
             transform: Default::default(),
             global_transform: Default::default(),
@@ -709,9 +742,13 @@ pub fn process_loaded_tile_maps(
     for changed_map in changed_maps.iter() {
         let map = maps.get_mut(changed_map).unwrap();
 
-        for (_, _, map_handle, mut materials_map, mut texture_atlas_map, _, _, _) in query.iter_mut() {
+        for (_, _, map_handle, mut materials_map, mut texture_atlas_map, _, _, _) in
+            query.iter_mut()
+        {
             // only deal with currently changed map
-            if map_handle != changed_map { continue; }
+            if map_handle != changed_map {
+                continue;
+            }
 
             for tileset in &map.map.tilesets {
                 if !materials_map.contains_key(&tileset.first_gid) {
@@ -719,10 +756,17 @@ pub fn process_loaded_tile_maps(
                         .image_folder
                         .join(tileset.images.first().unwrap().source.as_str());
                     let texture_handle = asset_server.load(texture_path);
-                    materials_map.insert(tileset.first_gid, materials.add(texture_handle.clone().into()));
+                    materials_map.insert(
+                        tileset.first_gid,
+                        materials.add(texture_handle.clone().into()),
+                    );
 
                     // only generate texture_atlas for tilesets used in objects
-                    let object_gids: Vec<_> = map.groups.iter().flat_map(|og| og.objects.iter().map(|o| o.tileset_gid)).collect();
+                    let object_gids: Vec<_> = map
+                        .groups
+                        .iter()
+                        .flat_map(|og| og.objects.iter().map(|o| o.tileset_gid))
+                        .collect();
                     if object_gids.contains(&Some(tileset.first_gid)) {
                         // For simplicity use textureAtlasSprite for object layers
                         // these insertions should be limited to sprites referenced by objects
@@ -734,19 +778,24 @@ pub fn process_loaded_tile_maps(
                         let columns = (texture_width / tile_width).floor() as usize;
                         let rows = (texture_height / tile_height).floor() as usize;
 
-                        let has_new = (0..(columns*rows) as u32).fold(false, |total, next | total || !texture_atlas_map.contains_key(&(tileset.first_gid + next)));
+                        let has_new = (0..(columns * rows) as u32).fold(false, |total, next| {
+                            total || !texture_atlas_map.contains_key(&(tileset.first_gid + next))
+                        });
                         if has_new {
                             let atlas = TextureAtlas::from_grid(
                                 texture_handle.clone(),
                                 Vec2::new(tile_width, tile_height),
                                 columns,
-                                rows
+                                rows,
                             );
                             let atlas_handle = texture_atlases.add(atlas);
                             for i in 0..(columns * rows) as u32 {
-                                if texture_atlas_map.contains_key(&(tileset.first_gid + i)) { continue; }
+                                if texture_atlas_map.contains_key(&(tileset.first_gid + i)) {
+                                    continue;
+                                }
                                 // println!("insert: {}", tileset.first_gid + i);
-                                texture_atlas_map.insert(tileset.first_gid + i, atlas_handle.clone());
+                                texture_atlas_map
+                                    .insert(tileset.first_gid + i, atlas_handle.clone());
                             }
                         }
                     }
@@ -767,7 +816,17 @@ pub fn process_loaded_tile_maps(
         }
     }
 
-    for (_, center, map_handle, materials_map, texture_atlas_map, origin, mut debug_config, mut created_entities) in query.iter_mut() {
+    for (
+        _,
+        center,
+        map_handle,
+        materials_map,
+        texture_atlas_map,
+        origin,
+        mut debug_config,
+        mut created_entities,
+    ) in query.iter_mut()
+    {
         if new_meshes.contains_key(map_handle) {
             let map = maps.get(map_handle).unwrap();
 
@@ -792,49 +851,62 @@ pub fn process_loaded_tile_maps(
                         .collect::<Vec<_>>();
 
                     // removing entities consumes the record of created entities
-                    created_entities.created_layer_entities.remove(&(layer_id, tileset_layer.tileset_guid)).map(|entities| {
-                        // println!("Despawning previously-created mesh for this chunk");
-                        for entity in entities.iter() {
-                            // println!("calling despawn on {:?}", entity);
-                            commands.despawn(*entity);
-                        }
-                    });
+                    created_entities
+                        .created_layer_entities
+                        .remove(&(layer_id, tileset_layer.tileset_guid))
+                        .map(|entities| {
+                            // println!("Despawning previously-created mesh for this chunk");
+                            for entity in entities.iter() {
+                                // println!("calling despawn on {:?}", entity);
+                                commands.despawn(*entity);
+                            }
+                        });
                     for (_, tileset_guid, mesh) in chunk_mesh_list.iter() {
                         // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
                         // Change this once it does.
 
                         // Instead for now spawn a new entity per chunk.
-                        commands.spawn(ChunkComponents {
-                            chunk: TileMapChunk {
-                                // TODO: Support more layers here..
-                                layer_id: layer_id as f32,
-                            },
-                            material: material_handle.clone(),
-                            mesh: mesh.clone(),
-                            map_parent: map_handle.clone(),
-                            transform: tile_map_transform.clone(),
-                            ..Default::default()
-                        }).current_entity().map(|new_entity| {
-                            // println!("added created_entry after spawn");
-                            created_entities.created_layer_entities.entry((layer_id, *tileset_guid))
-                                .or_insert_with(|| Vec::new()).push(new_entity);
-                        });
+                        commands
+                            .spawn(ChunkComponents {
+                                chunk: TileMapChunk {
+                                    // TODO: Support more layers here..
+                                    layer_id: layer_id as f32,
+                                },
+                                material: material_handle.clone(),
+                                mesh: mesh.clone(),
+                                map_parent: map_handle.clone(),
+                                transform: tile_map_transform.clone(),
+                                ..Default::default()
+                            })
+                            .current_entity()
+                            .map(|new_entity| {
+                                // println!("added created_entry after spawn");
+                                created_entities
+                                    .created_layer_entities
+                                    .entry((layer_id, *tileset_guid))
+                                    .or_insert_with(|| Vec::new())
+                                    .push(new_entity);
+                            });
                     }
                 }
             }
 
             if debug_config.enabled && debug_config.material.is_none() {
-                debug_config.material = Some(materials.add(ColorMaterial::from(Color::rgba(0.4, 0.4, 0.9, 0.5))));
+                debug_config.material =
+                    Some(materials.add(ColorMaterial::from(Color::rgba(0.4, 0.4, 0.9, 0.5))));
             }
             for object_group in map.groups.iter() {
                 for object in object_group.objects.iter() {
-                    created_entities.created_object_entities.remove(&object.gid).map(|entities| {
-                        // println!("Despawning previously-created object sprite");
-                        for entity in entities.iter() {
-                            // println!("calling despawn on {:?}", entity);
-                            commands.despawn(*entity);
-                        }
-                    });
+                    created_entities
+                        .created_object_entities
+                        .remove(&object.gid)
+                        .map(|entities| {
+                            // println!("Despawning previously-created object sprite");
+                            for entity in entities.iter() {
+                                // println!("calling despawn on {:?}", entity);
+                                commands.despawn(*entity);
+                            }
+                        });
                 }
                 if !object_group.visible {
                     continue;
@@ -842,11 +914,12 @@ pub fn process_loaded_tile_maps(
                 // TODO: use object_group.name, opacity, colour (properties)
                 for object in object_group.objects.iter() {
                     // println!("in object_group {}, object {:?}, grp: {}", object_group.name, &object.tileset_gid, object.gid);
-                    let atlas_handle = object.tileset_gid.and_then(|tileset_gid|
-                        texture_atlas_map.get(&tileset_gid)
-                    );
+                    let atlas_handle = object
+                        .tileset_gid
+                        .and_then(|tileset_gid| texture_atlas_map.get(&tileset_gid));
 
-                    object.spawn(
+                    object
+                        .spawn(
                             commands,
                             atlas_handle,
                             &map.map,
@@ -854,16 +927,20 @@ pub fn process_loaded_tile_maps(
                             &tile_map_transform,
                             &debug_config,
                         )
-                        .current_entity().map(|entity| {
+                        .current_entity()
+                        .map(|entity| {
                             // when done spawning, fire event
                             let evt = ObjectReadyEvent {
                                 map_handle: map_handle.clone(),
-                                entity: entity.clone()
+                                entity: entity.clone(),
                             };
                             ready_events.send(evt);
 
-                            created_entities.created_object_entities.entry(object.gid)
-                                .or_insert_with(|| Vec::new()).push(entity);
+                            created_entities
+                                .created_object_entities
+                                .entry(object.gid)
+                                .or_insert_with(|| Vec::new())
+                                .push(entity);
                         });
                 }
             }
@@ -873,5 +950,5 @@ pub fn process_loaded_tile_maps(
 
 pub struct ObjectReadyEvent {
     pub map_handle: Handle<Map>,
-    pub entity: Entity
+    pub entity: Entity,
 }

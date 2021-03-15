@@ -24,17 +24,13 @@ fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
             debug_config: DebugConfig {
                 enabled: true,
                 material: None,
-
             },
             ..Default::default()
         })
         .spawn(Camera2dBundle::default());
 }
 
-fn toggle_debug(
-    keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<&mut Visible, With<Object>>,
-) {
+fn toggle_debug(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut Visible, With<Object>>) {
     for mut visible in query.iter_mut() {
         if keyboard_input.just_released(KeyCode::Space) {
             visible.is_visible = !visible.is_visible;

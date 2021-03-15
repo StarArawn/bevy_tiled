@@ -1,6 +1,9 @@
 use crate::map::Map;
 use anyhow::Result;
-use bevy::{asset::{AssetLoader, AssetPath, LoadContext, LoadedAsset}, utils::BoxedFuture};
+use bevy::{
+    asset::{AssetLoader, AssetPath, LoadContext, LoadedAsset},
+    utils::BoxedFuture,
+};
 
 #[derive(Default)]
 pub struct TiledMapLoader;
@@ -27,15 +30,16 @@ impl AssetLoader for TiledMapLoader {
         Box::pin(async move {
             let path = load_context.path();
             let mut map = Map::try_from_bytes(path, bytes.into())?;
-            let dependencies = map.asset_dependencies.drain(..)
+            let dependencies = map
+                .asset_dependencies
+                .drain(..)
                 .map(|image_path| {
                     // add tileset to dependencies
                     AssetPath::new(image_path, None)
-                }).collect();
+                })
+                .collect();
             let loaded_asset = LoadedAsset::new(map);
-            load_context.set_default_asset(
-                loaded_asset.with_dependencies(dependencies)
-            );
+            load_context.set_default_asset(loaded_asset.with_dependencies(dependencies));
             Ok(())
         })
     }
