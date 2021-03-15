@@ -10,7 +10,7 @@ fn main() {
         .run();
 }
 
-fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(bevy_tiled_prototype::TiledMapComponents {
             map_asset: asset_server.load("iso-map.tmx"),
@@ -18,7 +18,7 @@ fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
             origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
             ..Default::default()
         })
-        .spawn(Camera2dBundle::default());
+        .spawn(OrthographicCameraBundle::new_2d());
 }
 
 fn camera_movement(
@@ -27,7 +27,7 @@ fn camera_movement(
     mut query: Query<(&Camera, &mut Transform)>,
 ) {
     for (_, mut transform) in query.iter_mut() {
-        let mut direction = Vec3::zero();
+        let mut direction = Vec3::ZERO;
         let scale = transform.scale.x;
 
         if keyboard_input.pressed(KeyCode::A) {

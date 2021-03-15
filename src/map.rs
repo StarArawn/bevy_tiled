@@ -1,6 +1,7 @@
 use anyhow::Result;
 use bevy::{
     prelude::*,
+    reflect::TypeUuid,
     render::mesh::Indices,
     render::{
         draw::Visible, mesh::VertexAttributeValues, pipeline::PrimitiveTopology,
@@ -8,10 +9,8 @@ use bevy::{
     },
     utils::{HashMap, HashSet},
 };
-use bevy_reflect::TypeUuid;
 
 use crate::{loader::TiledMapLoader, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
-use glam::Vec2;
 use std::{
     io::BufReader,
     path::{Path, PathBuf},
@@ -531,15 +530,15 @@ impl Object {
         transform
     }
 
-    pub fn spawn<'a>(
+    pub fn spawn<'a, 'b>(
         &self,
-        commands: &'a mut Commands,
+        commands: &'a mut Commands<'b>,
         texture_atlas: Option<&Handle<TextureAtlas>>,
         map: &tiled::Map,
         map_handle: Handle<Map>,
         tile_map_transform: &Transform,
         debug_config: &DebugConfig,
-    ) -> &'a mut Commands {
+    ) -> &'a mut Commands<'b> {
         if let Some(texture_atlas) = texture_atlas {
             let sprite_index = self.sprite_index.expect("missing sprite index");
             let tileset_gid = self.tileset_gid.expect("missing tileset");
@@ -650,11 +649,6 @@ impl Default for TiledMapComponents {
     }
 }
 
-#[derive(Default)]
-pub struct MapResourceProviderState {
-    map_event_reader: EventReader<AssetEvent<Map>>,
-}
-
 #[derive(Default, Debug)]
 pub struct CreatedMapEntities {
     // maps layer id and tileset_gid to mesh entities
@@ -700,11 +694,10 @@ impl Default for ChunkComponents {
 }
 
 pub fn process_loaded_tile_maps(
-    commands: &mut Commands,
+    mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut state: Local<MapResourceProviderState>,
-    map_events: Res<Events<AssetEvent<Map>>>,
-    mut ready_events: ResMut<Events<ObjectReadyEvent>>,
+    mut map_events: EventReader<AssetEvent<Map>>,
+    mut ready_events: EventWriter<ObjectReadyEvent>,
     mut maps: ResMut<Assets<Map>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -721,7 +714,7 @@ pub fn process_loaded_tile_maps(
     )>,
 ) {
     let mut changed_maps = HashSet::<Handle<Map>>::default();
-    for event in state.map_event_reader.iter(&map_events) {
+    for event in map_events.iter() {
         match event {
             AssetEvent::Created { handle } => {
                 changed_maps.insert(handle.clone());
@@ -920,7 +913,7 @@ pub fn process_loaded_tile_maps(
 
                     object
                         .spawn(
-                            commands,
+                            &mut commands,
                             atlas_handle,
                             &map.map,
                             map_handle.clone(),
