@@ -572,7 +572,7 @@ impl Object {
             tiled::ObjectShape::Ellipse { width , height } => Some(Vec2::new(width, height)),
             tiled::ObjectShape::Polyline { points: _ } |
             tiled::ObjectShape::Polygon { points: _ } |
-            tiled::ObjectShape::Point(_, _) => None,
+            tiled::ObjectShape::Point(_, _) => Some(Vec2::splat(1.0)),
         }
     }
 }
