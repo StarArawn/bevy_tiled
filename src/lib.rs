@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::render_graph::RenderGraph};
+use bevy::prelude::*;
 
 mod loader;
 mod map;
@@ -19,8 +19,7 @@ impl Plugin for TiledMapPlugin {
             .add_event::<ObjectReadyEvent>()
             .add_system(process_loaded_tile_maps.system());
 
-        let resources = app.resources();
-        let mut render_graph = resources.get_mut::<RenderGraph>().unwrap();
-        render_graph.add_tile_map_graph(resources);
+        let world = app.world_mut();
+        add_tile_map_graph(world);
     }
 }

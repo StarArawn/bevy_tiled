@@ -15,7 +15,7 @@ fn main() {
         .run();
 }
 
-fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
         .spawn(bevy_tiled_prototype::TiledMapComponents {
             map_asset: asset_server.load("ortho-map.tmx"),
@@ -24,17 +24,13 @@ fn setup(commands: &mut Commands, asset_server: Res<AssetServer>) {
             debug_config: DebugConfig {
                 enabled: true,
                 material: None,
-
             },
             ..Default::default()
         })
-        .spawn(Camera2dBundle::default());
+        .spawn(OrthographicCameraBundle::new_2d());
 }
 
-fn toggle_debug(
-    keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<&mut Visible, With<Object>>,
-) {
+fn toggle_debug(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut Visible, With<Object>>) {
     for mut visible in query.iter_mut() {
         if keyboard_input.just_released(KeyCode::Space) {
             visible.is_visible = !visible.is_visible;
