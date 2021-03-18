@@ -81,6 +81,10 @@ Limited support for hot reload is provided. Old entities are removed based on th
 
 Then when you save your map, it should update in the application.
 
+## WASM and bevy_webgl2
+
+Use `default-features=false, features=["web"]` in your project's `Cargo.toml`. Tiled maps using Zstd compression are not supported.
+
 ## Top-needed features
 
   * better support for isometric maps
