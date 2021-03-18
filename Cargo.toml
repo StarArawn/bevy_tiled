@@ -12,9 +12,23 @@ exclude = [
 ]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+
+default = [
+    "bevy/bevy_wgpu",
+    "bevy/bevy_winit",
+    "bevy/png",
+    "bevy/render",
+]
+
+web = [
+    "bevy/bevy_winit",
+    "bevy/render",
+]
 
 [dependencies]
 anyhow = "1.0"
-bevy = { git = "https://github.com/bevyengine/bevy", branch = "main" }
+bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
+
 #tiled = "0.9"
-tiled = { git = "https://github.com/mattyhall/rs-tiled", branch = "master" }
+tiled = { git = "https://github.com/mattyhall/rs-tiled", branch = "master", default-features = false }
