@@ -15,6 +15,6 @@ exclude = [
 
 [dependencies]
 anyhow = "1.0"
-bevy = { git = "https://github.com/bevyengine/bevy", rev = "c3a72e9dc85b53a1448138270c72e806fc91ec85" }
+bevy = { git = "https://github.com/bevyengine/bevy", branch = "main" }
 #tiled = "0.9"
 tiled = { git = "https://github.com/mattyhall/rs-tiled", branch = "master" }
