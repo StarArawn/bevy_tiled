@@ -12,7 +12,7 @@ fn main() {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands
-        .spawn(bevy_tiled_prototype::TiledMapComponents {
+        .spawn(bevy_tiled_prototype::TiledMapBundle {
             map_asset: asset_server.load("iso-map.tmx"),
             center: TiledMapCenter(true),
             origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
