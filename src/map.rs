@@ -1,5 +1,7 @@
+use crate::{loader::TiledMapLoader, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 use anyhow::Result;
 use bevy::{
+    ecs::system::EntityCommands,
     prelude::*,
     reflect::TypeUuid,
     render::mesh::Indices,
@@ -9,8 +11,6 @@ use bevy::{
     },
     utils::{HashMap, HashSet},
 };
-
-use crate::{loader::TiledMapLoader, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 use std::{
     io::BufReader,
     path::{Path, PathBuf},
@@ -533,14 +533,14 @@ impl Object {
 
     pub fn spawn<'a, 'b>(
         &self,
-        commands: &'a mut Commands<'b>,
+        commands: &'b mut Commands<'a>,
         texture_atlas: Option<&Handle<TextureAtlas>>,
         map: &tiled::Map,
         map_handle: Handle<Map>,
         tile_map_transform: &Transform,
         debug_config: &DebugConfig,
-    ) -> &'a mut Commands<'b> {
-        if let Some(texture_atlas) = texture_atlas {
+    ) -> EntityCommands<'a, 'b> {
+        let mut new_entity_commands = if let Some(texture_atlas) = texture_atlas {
             let sprite_index = self.sprite_index.expect("missing sprite index");
             let tileset_gid = self.tileset_gid.expect("missing tileset");
 
@@ -558,7 +558,7 @@ impl Object {
             } else {
                 None
             };
-            commands.spawn(SpriteSheetBundle {
+            commands.spawn_bundle(SpriteSheetBundle {
                 transform: self.transform_from_map(&map, tile_map_transform, tile_scale),
                 texture_atlas: texture_atlas.clone(),
                 sprite: TextureAtlasSprite {
@@ -580,7 +580,7 @@ impl Object {
             let transform = self.transform_from_map(&map, &tile_map_transform, None);
             commands
                 // Debug box.
-                .spawn(SpriteBundle {
+                .spawn_bundle(SpriteBundle {
                     material: debug_config
                         .material
                         .clone()
@@ -594,9 +594,10 @@ impl Object {
                     },
                     ..Default::default()
                 })
-        }
-        .with(map_handle)
-        .with(self.clone())
+        };
+
+        new_entity_commands.insert_bundle((map_handle, self.clone()));
+        new_entity_commands
     }
 
     pub fn dimensions(&self) -> Option<Vec2> {
@@ -859,7 +860,7 @@ pub fn process_loaded_tile_maps(
                             // println!("Despawning previously-created mesh for this chunk");
                             for entity in entities.iter() {
                                 // println!("calling despawn on {:?}", entity);
-                                commands.despawn(*entity);
+                                commands.entity(*entity).despawn();
                             }
                         });
                     let mut chunk_entities: Vec<Entity> = Default::default();
@@ -870,7 +871,7 @@ pub fn process_loaded_tile_maps(
 
                         // Instead for now spawn a new entity per chunk.
                         let chunk_entity = commands
-                            .spawn(ChunkBundle {
+                            .spawn_bundle(ChunkBundle {
                                 chunk: TileMapChunk {
                                     // TODO: Support more layers here..
                                     layer_id: layer_id as f32,
@@ -881,23 +882,22 @@ pub fn process_loaded_tile_maps(
                                 transform: tile_map_transform.clone(),
                                 ..Default::default()
                             })
-                            .current_entity();
+                            .id();
 
-                        if let Some(new_entity) = chunk_entity {
-                            // println!("added created_entry after spawn");
-                            created_entities
-                                .created_layer_entities
-                                .entry((layer_id, *tileset_guid))
-                                .or_insert_with(|| Vec::new())
-                                .push(new_entity);
-                            chunk_entities.push(new_entity);
-                        };
+                        // println!("added created_entry after spawn");
+                        created_entities
+                            .created_layer_entities
+                            .entry((layer_id, *tileset_guid))
+                            .or_insert_with(|| Vec::new())
+                            .push(chunk_entity);
+                        chunk_entities.push(chunk_entity);
                     }
                     // if parent was passed in add children and mark it as MapRoot (temp until map bundle returns real entity)
                     if let Some(parent_entity) = optional_parent {
                         commands
-                            .push_children(parent_entity.clone(), &chunk_entities)
-                            .insert(parent_entity.clone(), MapRoot);
+                            .entity(parent_entity.clone())
+                            .push_children(&chunk_entities)
+                            .insert(MapRoot);
                     }
                 }
             }
@@ -915,7 +915,7 @@ pub fn process_loaded_tile_maps(
                             // println!("Despawning previously-created object sprite");
                             for entity in entities.iter() {
                                 // println!("calling despawn on {:?}", entity);
-                                commands.despawn(*entity);
+                                commands.entity(*entity).despawn();
                             }
                         });
                 }
@@ -932,7 +932,7 @@ pub fn process_loaded_tile_maps(
                         .tileset_gid
                         .and_then(|tileset_gid| texture_atlas_map.get(&tileset_gid));
 
-                    object
+                    let entity = object
                         .spawn(
                             &mut commands,
                             atlas_handle,
@@ -941,27 +941,28 @@ pub fn process_loaded_tile_maps(
                             &tile_map_transform,
                             &debug_config,
                         )
-                        .current_entity()
-                        .map(|entity| {
-                            // when done spawning, fire event
-                            let evt = ObjectReadyEvent {
-                                entity: entity.clone(),
-                                map_handle: map_handle.clone(),
-                                map_entity_option: optional_parent.clone(),
-                            };
-                            ready_events.send(evt);
+                        .id();
+                    // when done spawning, fire event
+                    let evt = ObjectReadyEvent {
+                        entity: entity.clone(),
+                        map_handle: map_handle.clone(),
+                        map_entity_option: optional_parent.clone(),
+                    };
+                    ready_events.send(evt);
 
-                            created_entities
-                                .created_object_entities
-                                .entry(object.gid)
-                                .or_insert_with(|| Vec::new())
-                                .push(entity);
-                            object_entities.push(entity);
-                        });
+                    created_entities
+                        .created_object_entities
+                        .entry(object.gid)
+                        .or_insert_with(|| Vec::new())
+                        .push(entity);
+                    object_entities.push(entity);
                 }
+
                 // if parent was passed in add children
                 if let Some(parent_entity) = optional_parent {
-                    commands.push_children(parent_entity.clone(), &object_entities);
+                    commands
+                        .entity(parent_entity.clone())
+                        .push_children(&object_entities);
                 }
             }
             let evt = MapReadyEvent {

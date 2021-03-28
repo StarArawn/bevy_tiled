@@ -16,18 +16,17 @@ fn main() {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands
-        .spawn(bevy_tiled_prototype::TiledMapBundle {
-            map_asset: asset_server.load("ortho-map.tmx"),
-            center: TiledMapCenter(true),
-            origin: Transform::from_scale(Vec3::new(SCALE, SCALE, 1.0)),
-            debug_config: DebugConfig {
-                enabled: true,
-                material: None,
-            },
-            ..Default::default()
-        })
-        .spawn(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(bevy_tiled_prototype::TiledMapBundle {
+        map_asset: asset_server.load("ortho-map.tmx"),
+        center: TiledMapCenter(true),
+        origin: Transform::from_scale(Vec3::new(SCALE, SCALE, 1.0)),
+        debug_config: DebugConfig {
+            enabled: true,
+            material: None,
+        },
+        ..Default::default()
+    });
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }
 
 fn toggle_debug(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut Visible, With<Object>>) {
