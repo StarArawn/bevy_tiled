@@ -75,8 +75,8 @@ pub mod node {
 }
 
 pub(crate) fn add_tile_map_graph(world: &mut World) {
-    world.resource_scope(|mut pipelines: Mut<Assets<PipelineDescriptor>>, world| {
-        world.resource_scope(|mut shaders: Mut<Assets<Shader>>, world| {
+    world.resource_scope(|world, mut pipelines: Mut<Assets<PipelineDescriptor>>| {
+        world.resource_scope(|world, mut shaders: Mut<Assets<Shader>>| {
             let mut graph = world.get_resource_mut::<RenderGraph>().unwrap();
             pipelines.set_untracked(
                 TILE_MAP_PIPELINE_HANDLE,
