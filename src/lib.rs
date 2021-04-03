@@ -3,6 +3,8 @@ use bevy::prelude::*;
 mod loader;
 mod map;
 pub use map::*;
+mod objects;
+pub use objects::*;
 mod pipeline;
 pub use pipeline::*;
 mod tile_map;
