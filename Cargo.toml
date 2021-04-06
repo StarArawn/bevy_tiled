@@ -28,7 +28,7 @@ web = [
 
 [dependencies]
 anyhow = "1.0"
-bevy = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
+bevy = { version = "0.5", default-features = false }
 
 #tiled = "0.9"
 tiled = { git = "https://github.com/mattyhall/rs-tiled", branch = "master", default-features = false }

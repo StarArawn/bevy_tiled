@@ -10,7 +10,7 @@ Feel free to use this code as a reference for your own custom tile mapping solut
 
 ## Bevy Versions
 
-The `main` branch of this repository does its best to track Bevy's main branch, which is at 0.5-pre. When using it, please make sure your version of Bevy matches the version referenced by this library. This will eventually target the stable 0.5 release.
+The `main` branch of this repository targets Bevy 0.5. When using bevy_tiled, please make sure your version of Bevy matches the version referenced by this library. There are versions for 0.4 and 0.3 as well.
 
 If you were using framp's fork, it is currently merged in and mirrored by the [v0.1.0-bevy-0.4](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.1.0-bevy-0.4) release. For a few more bugfixes, you can point to the [v0.1.1-bevy-0.4](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.1.1-bevy-0.4) tag. Object support in Bevy 0.4 is usable, and is an [open PR](https://github.com/StarArawn/bevy_tiled/pull/41), targetting the `bevy-0.4` branch and published as the [v0.2.1-rc1-bevy-0.4](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.2.1-rc1-bevy-0.4) tag.
 
