@@ -20,6 +20,8 @@ use std::{
 pub use tiled::ObjectShape;
 pub use tiled::Properties;
 pub use tiled::PropertyValue;
+pub use tiled::LayerData;
+pub use tiled;
 
 #[derive(Debug)]
 pub struct Tile {
