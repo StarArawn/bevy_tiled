@@ -10,6 +10,7 @@ use bevy::{
     },
     utils::{HashMap, HashSet},
 };
+use tiled::{LayerTile, Tileset};
 use std::{
     io::BufReader,
     path::{Path, PathBuf},
@@ -31,6 +32,52 @@ pub struct Tile {
     pub flip_d: bool,
     pub flip_h: bool,
     pub flip_v: bool,
+}
+
+impl Tile {
+    pub fn from_layer_and_tileset(layer_tile: &LayerTile, tileset: &Tileset, chunk_pos: Vec2, vertex: Vec4) -> Tile {
+        let tile_width = tileset.tile_width as f32;
+        let tile_height = tileset.tile_height as f32;
+        let tile_space = tileset.spacing as f32;
+        let image = tileset.images.first().unwrap();
+        let texture_width = image.width as f32;
+        let texture_height = image.height as f32;
+        let columns = ((texture_width + tile_space) / (tile_width + tile_space)).floor(); // account for no end tile
+
+        let tile = (TiledMapLoader::remove_tile_flags(layer_tile.gid) as f32) - tileset.first_gid as f32;
+
+        // This calculation is much simpler we only care about getting the remainder
+        // and multiplying that by the tile width.
+        let sprite_sheet_x: f32 =
+            ((tile % columns) * (tile_width + tile_space) - tile_space)
+                .floor();
+
+        // Calculation here is (tile / columns).round_down * (tile_space + tile_height) - tile_space
+        // Example: tile 30 / 28 columns = 1.0714 rounded down to 1 * 16 tile_height = 16 Y
+        // which is the 2nd row in the sprite sheet.
+        // Example2: tile 10 / 28 columns = 0.3571 rounded down to 0 * 16 tile_height = 0 Y
+        // which is the 1st row in the sprite sheet.
+        let sprite_sheet_y: f32 = (tile / columns).floor()
+            * (tile_height + tile_space)
+            - tile_space;
+
+        // Calculate UV:
+        let start_u: f32 = sprite_sheet_x / texture_width;
+        let end_u: f32 = (sprite_sheet_x + tile_width) / texture_width;
+        let start_v: f32 = sprite_sheet_y / texture_height;
+        let end_v: f32 =
+            (sprite_sheet_y + tile_height) / texture_height;
+
+        Tile {
+            tile_id: layer_tile.gid,
+            pos: chunk_pos.clone(),
+            vertex: vertex.clone(),
+            uv: Vec4::new(start_u, start_v, end_u, end_v),
+            flip_d: layer_tile.flip_d,
+            flip_h: layer_tile.flip_h,
+            flip_v: layer_tile.flip_v,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -154,10 +201,6 @@ impl Map {
                 let tile_width = tileset.tile_width as f32;
                 let tile_height = tileset.tile_height as f32;
                 let tile_space = tileset.spacing as f32;
-                let image = tileset.images.first().unwrap();
-                let texture_width = image.width as f32;
-                let texture_height = image.height as f32;
-                let columns = ((texture_width + tile_space) / (tile_width + tile_space)).floor(); // account for no end tile
 
                 let tile_path = image_folder.join(tileset.images.first().unwrap().source.as_str());
                 asset_dependencies.push(tile_path);
@@ -174,49 +217,26 @@ impl Map {
                             for tile_y in 0..target_chunk_y {
                                 let lookup_x = (chunk_x * target_chunk_x) + tile_x;
                                 let lookup_y = (chunk_y * target_chunk_y) + tile_y;
+                                let chunk_pos = Vec2::new(lookup_x as f32, lookup_y as f32);
 
-                                // Get chunk tile.
-                                let chunk_tile = if lookup_x < map.width as usize
-                                    && lookup_y < map.height as usize
-                                {
-                                    // New Tiled crate code:
+                                tiles_y.push(if lookup_x < map.width as usize && lookup_y < map.height as usize {
                                     let map_tile = match &layer.tiles {
                                         tiled::LayerData::Finite(tiles) => {
                                             &tiles[lookup_y][lookup_x]
                                         }
                                         _ => panic!("Infinte maps not supported"),
                                     };
-
-                                    let tile = map_tile.gid;
-                                    if tile < tileset.first_gid
-                                        || tile >= tileset.first_gid + tileset.tilecount.unwrap()
+                                    // tile not in this set
+                                    if map_tile.gid < tileset.first_gid
+                                        || map_tile.gid >= tileset.first_gid + tileset.tilecount.unwrap()
                                     {
                                         continue;
                                     }
-
-                                    let tile = (TiledMapLoader::remove_tile_flags(tile) as f32)
-                                        - tileset.first_gid as f32;
-
-                                    // This calculation is much simpler we only care about getting the remainder
-                                    // and multiplying that by the tile width.
-                                    let sprite_sheet_x: f32 =
-                                        ((tile % columns) * (tile_width + tile_space) - tile_space)
-                                            .floor();
-
-                                    // Calculation here is (tile / columns).round_down * (tile_space + tile_height) - tile_space
-                                    // Example: tile 30 / 28 columns = 1.0714 rounded down to 1 * 16 tile_height = 16 Y
-                                    // which is the 2nd row in the sprite sheet.
-                                    // Example2: tile 10 / 28 columns = 0.3571 rounded down to 0 * 16 tile_height = 0 Y
-                                    // which is the 1st row in the sprite sheet.
-                                    let sprite_sheet_y: f32 = (tile / columns).floor()
-                                        * (tile_height + tile_space)
-                                        - tile_space;
-
                                     // Calculate positions
-                                    let (start_x, end_x, start_y, end_y) = match map.orientation {
+                                    let vertex = match map.orientation {
                                         tiled::Orientation::Orthogonal => {
                                             let center = Map::project_ortho(
-                                                Vec2::new(lookup_x as f32, lookup_y as f32),
+                                                chunk_pos,
                                                 tile_width,
                                                 tile_height,
                                             );
@@ -231,11 +251,11 @@ impl Map {
                                                 center.y,
                                             );
 
-                                            (start.x, end.x, start.y, end.y)
+                                            Vec4::new(start.x, start.y, end.x, end.y)
                                         }
                                         tiled::Orientation::Isometric => {
                                             let center = Map::project_iso(
-                                                Vec2::new(lookup_x as f32, lookup_y as f32),
+                                                chunk_pos,
                                                 tile_width,
                                                 tile_height,
                                             );
@@ -248,43 +268,26 @@ impl Map {
                                             let end =
                                                 Vec2::new(center.x + tile_width / 2.0, center.y);
 
-                                            (start.x, end.x, start.y, end.y)
+                                            Vec4::new(start.x, start.y, end.x, end.y)
                                         }
                                         _ => {
                                             panic!("Unsupported orientation {:?}", map.orientation)
                                         }
                                     };
-
-                                    // Calculate UV:
-                                    let start_u: f32 = sprite_sheet_x / texture_width;
-                                    let end_u: f32 = (sprite_sheet_x + tile_width) / texture_width;
-                                    let start_v: f32 = sprite_sheet_y / texture_height;
-                                    let end_v: f32 =
-                                        (sprite_sheet_y + tile_height) / texture_height;
-
-                                    Tile {
-                                        tile_id: map_tile.gid,
-                                        pos: Vec2::new(tile_x as f32, tile_y as f32),
-                                        vertex: Vec4::new(start_x, start_y, end_x, end_y),
-                                        uv: Vec4::new(start_u, start_v, end_u, end_v),
-                                        flip_d: map_tile.flip_d,
-                                        flip_h: map_tile.flip_h,
-                                        flip_v: map_tile.flip_v,
-                                    }
+                                    // Get chunk tile.
+                                    Tile::from_layer_and_tileset(map_tile, tileset, chunk_pos, vertex)
                                 } else {
                                     // Empty tile
                                     Tile {
                                         tile_id: 0,
-                                        pos: Vec2::new(tile_x as f32, tile_y as f32),
+                                        pos: chunk_pos,
                                         vertex: Vec4::new(0.0, 0.0, 0.0, 0.0),
                                         uv: Vec4::new(0.0, 0.0, 0.0, 0.0),
                                         flip_d: false,
                                         flip_h: false,
                                         flip_v: false,
                                     }
-                                };
-
-                                tiles_y.push(chunk_tile);
+                                }); // end tiles_y.push(chunk_tile);
                             }
                             tiles.push(tiles_y);
                         }
