@@ -1,7 +1,7 @@
 use bevy::{
     math::{Vec2, Vec4},
     render::{
-        draw::Visible, mesh::VertexAttributeValues, pipeline::PrimitiveTopology,
+        draw::Visible,
         pipeline::RenderPipeline, render_graph::base::MainPass,
     },
 };

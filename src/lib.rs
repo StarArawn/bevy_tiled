@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+mod utils;
+pub use utils::*;
+
 mod loader;
 mod map;
 pub use map::*;
