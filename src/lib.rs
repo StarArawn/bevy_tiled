@@ -3,12 +3,17 @@ use bevy::prelude::*;
 mod loader;
 mod map;
 pub use map::*;
+mod layers;
+pub use layers::*;
 mod objects;
 pub use objects::*;
+
 mod pipeline;
 pub use pipeline::*;
 mod tile_map;
 pub use tile_map::*;
+mod tile_chunk;
+pub use tile_chunk::*;
 
 /// Adds support for GLTF file loading to Apps
 #[derive(Default)]

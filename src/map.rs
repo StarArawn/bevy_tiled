@@ -1,100 +1,158 @@
-use crate::{TILE_MAP_PIPELINE_HANDLE, TileMapChunk, loader::TiledMapLoader, objects::ObjectGroup};
+use crate::{objects::ObjectGroup, LayerChunk, TileChunk, TileMapChunk, ChunkBundle};
 use anyhow::Result;
 use bevy::{
     prelude::*,
     reflect::TypeUuid,
     render::mesh::Indices,
-    render::{
-        draw::Visible, mesh::VertexAttributeValues, pipeline::PrimitiveTopology,
-        pipeline::RenderPipeline, render_graph::base::MainPass,
-    },
+    render::{mesh::VertexAttributeValues, pipeline::PrimitiveTopology},
     utils::{HashMap, HashSet},
 };
-use tiled::{LayerTile, Tileset};
 use std::{
     io::BufReader,
     path::{Path, PathBuf},
 };
-
 // objects include these by default for now
+pub use tiled;
+pub use tiled::LayerData;
 pub use tiled::ObjectShape;
 pub use tiled::Properties;
 pub use tiled::PropertyValue;
-pub use tiled::LayerData;
-pub use tiled;
-
-#[derive(Debug)]
-pub struct Tile {
-    pub tile_id: u32,
-    pub pos: Vec2,
-    pub vertex: Vec4,
-    pub uv: Vec4,
-    pub flip_d: bool,
-    pub flip_h: bool,
-    pub flip_v: bool,
-}
-
-impl Tile {
-    pub fn from_layer_and_tileset(layer_tile: &LayerTile, tileset: &Tileset, chunk_pos: Vec2, vertex: Vec4) -> Tile {
-        let tile_width = tileset.tile_width as f32;
-        let tile_height = tileset.tile_height as f32;
-        let tile_space = tileset.spacing as f32;
-        let image = tileset.images.first().unwrap();
-        let texture_width = image.width as f32;
-        let texture_height = image.height as f32;
-        let columns = ((texture_width + tile_space) / (tile_width + tile_space)).floor(); // account for no end tile
-
-        let tile = (TiledMapLoader::remove_tile_flags(layer_tile.gid) as f32) - tileset.first_gid as f32;
-
-        // This calculation is much simpler we only care about getting the remainder
-        // and multiplying that by the tile width.
-        let sprite_sheet_x: f32 =
-            ((tile % columns) * (tile_width + tile_space) - tile_space)
-                .floor();
-
-        // Calculation here is (tile / columns).round_down * (tile_space + tile_height) - tile_space
-        // Example: tile 30 / 28 columns = 1.0714 rounded down to 1 * 16 tile_height = 16 Y
-        // which is the 2nd row in the sprite sheet.
-        // Example2: tile 10 / 28 columns = 0.3571 rounded down to 0 * 16 tile_height = 0 Y
-        // which is the 1st row in the sprite sheet.
-        let sprite_sheet_y: f32 = (tile / columns).floor()
-            * (tile_height + tile_space)
-            - tile_space;
-
-        // Calculate UV:
-        let start_u: f32 = sprite_sheet_x / texture_width;
-        let end_u: f32 = (sprite_sheet_x + tile_width) / texture_width;
-        let start_v: f32 = sprite_sheet_y / texture_height;
-        let end_v: f32 =
-            (sprite_sheet_y + tile_height) / texture_height;
-
-        Tile {
-            tile_id: layer_tile.gid,
-            pos: chunk_pos.clone(),
-            vertex: vertex.clone(),
-            uv: Vec4::new(start_u, start_v, end_u, end_v),
-            flip_d: layer_tile.flip_d,
-            flip_h: layer_tile.flip_h,
-            flip_v: layer_tile.flip_v,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Chunk {
-    pub position: Vec2,
-    pub tiles: Vec<Vec<Tile>>,
-}
 
 #[derive(Debug)]
 pub struct TilesetLayer {
     pub tile_size: Vec2,
-    pub chunks: Vec<Vec<Chunk>>,
+    pub chunks: Vec<Vec<LayerChunk>>,
     pub tileset_guid: u32,
 }
+impl TilesetLayer {
+    pub fn new(map: &tiled::Map, layer: &tiled::Layer, tileset: &tiled::Tileset) -> TilesetLayer{
+        let target_chunk_x = 32;
+        let target_chunk_y = 32;
 
+        let chunk_size_x = (map.width as f32 / target_chunk_x as f32).ceil().max(1.0) as usize;
+        let chunk_size_y = (map.height as f32 / target_chunk_y as f32).ceil().max(1.0) as usize;
+
+        let tile_width = tileset.tile_width as f32;
+        let tile_height = tileset.tile_height as f32;
+        let tile_space = tileset.spacing as f32;
+
+        let mut chunks = Vec::new();
+        // 32 x 32 tile chunk sizes
+        for chunk_x in 0..chunk_size_x {
+            let mut chunks_y = Vec::new();
+            for chunk_y in 0..chunk_size_y {
+                let mut tiles = Vec::new();
+
+                for tile_x in 0..target_chunk_x {
+                    let mut tiles_y = Vec::new();
+                    for tile_y in 0..target_chunk_y {
+                        let lookup_x = (chunk_x * target_chunk_x) + tile_x;
+                        let lookup_y = (chunk_y * target_chunk_y) + tile_y;
+                        let chunk_pos = Vec2::new(lookup_x as f32, lookup_y as f32);
+
+                        tiles_y.push(
+                            if lookup_x < map.width as usize
+                                && lookup_y < map.height as usize
+                            {
+                                let map_tile = match &layer.tiles {
+                                    tiled::LayerData::Finite(tiles) => {
+                                        &tiles[lookup_y][lookup_x]
+                                    }
+                                    _ => panic!("Infinte maps not supported"),
+                                };
+                                // tile not in this set
+                                if map_tile.gid < tileset.first_gid
+                                    || map_tile.gid
+                                        >= tileset.first_gid + tileset.tilecount.unwrap()
+                                {
+                                    continue;
+                                }
+                                // Calculate positions
+                                let vertex = match map.orientation {
+                                    tiled::Orientation::Orthogonal => {
+                                        let center = Map::project_ortho(
+                                            chunk_pos,
+                                            tile_width,
+                                            tile_height,
+                                        );
+
+                                        let start = Vec2::new(
+                                            center.x,
+                                            center.y - tile_height - tile_space,
+                                        );
+
+                                        let end = Vec2::new(
+                                            center.x + tile_width + tile_space,
+                                            center.y,
+                                        );
+
+                                        Vec4::new(start.x, start.y, end.x, end.y)
+                                    }
+                                    tiled::Orientation::Isometric => {
+                                        let center = Map::project_iso(
+                                            chunk_pos,
+                                            tile_width,
+                                            tile_height,
+                                        );
+
+                                        let start = Vec2::new(
+                                            center.x - tile_width / 2.0,
+                                            center.y - tile_height,
+                                        );
+
+                                        let end = Vec2::new(
+                                            center.x + tile_width / 2.0,
+                                            center.y,
+                                        );
+
+                                        Vec4::new(start.x, start.y, end.x, end.y)
+                                    }
+                                    _ => {
+                                        panic!(
+                                            "Unsupported orientation {:?}",
+                                            map.orientation
+                                        )
+                                    }
+                                };
+                                // Get chunk tile.
+                                TileChunk::from_layer_and_tileset(
+                                    map_tile, tileset, chunk_pos, vertex,
+                                )
+                            } else {
+                                // Empty tile
+                                TileChunk {
+                                    tile_id: 0,
+                                    pos: chunk_pos,
+                                    vertex: Vec4::new(0.0, 0.0, 0.0, 0.0),
+                                    uv: Vec4::new(0.0, 0.0, 0.0, 0.0),
+                                    flip_d: false,
+                                    flip_h: false,
+                                    flip_v: false,
+                                }
+                            },
+                        ); // end tiles_y.push(chunk_tile);
+                    }
+                    tiles.push(tiles_y);
+                }
+
+                let chunk = LayerChunk {
+                    position: Vec2::new(chunk_x as f32, chunk_y as f32),
+                    tiles,
+                };
+                chunks_y.push(chunk);
+            }
+            chunks.push(chunks_y);
+        }
+
+        TilesetLayer {
+            tile_size: Vec2::new(tile_width, tile_height),
+            chunks,
+            tileset_guid: tileset.first_gid,
+        }
+    }
+}
 #[derive(Debug)]
-pub struct Layer {
+pub struct MapLayer {
     pub tileset_layers: Vec<TilesetLayer>,
 }
 
@@ -104,7 +162,7 @@ pub struct Layer {
 pub struct Map {
     pub map: tiled::Map,
     pub meshes: Vec<(u32, u32, Mesh)>,
-    pub layers: Vec<Layer>,
+    pub layers: Vec<MapLayer>,
     pub groups: Vec<ObjectGroup>,
     pub tile_size: Vec2,
     pub image_folder: std::path::PathBuf,
@@ -182,11 +240,7 @@ impl Map {
             groups.push(tiled_o_g);
         }
 
-        let target_chunk_x = 32;
-        let target_chunk_y = 32;
 
-        let chunk_size_x = (map.width as f32 / target_chunk_x as f32).ceil().max(1.0) as usize;
-        let chunk_size_y = (map.height as f32 / target_chunk_y as f32).ceil().max(1.0) as usize;
         let tile_size = Vec2::new(map.tile_width as f32, map.tile_height as f32);
         let image_folder: PathBuf = asset_path.parent().unwrap().into();
         let mut asset_dependencies = Vec::new();
@@ -198,118 +252,13 @@ impl Map {
             let mut tileset_layers = Vec::new();
 
             for tileset in map.tilesets.iter() {
-                let tile_width = tileset.tile_width as f32;
-                let tile_height = tileset.tile_height as f32;
-                let tile_space = tileset.spacing as f32;
-
                 let tile_path = image_folder.join(tileset.images.first().unwrap().source.as_str());
                 asset_dependencies.push(tile_path);
-
-                let mut chunks = Vec::new();
-                // 32 x 32 tile chunk sizes
-                for chunk_x in 0..chunk_size_x {
-                    let mut chunks_y = Vec::new();
-                    for chunk_y in 0..chunk_size_y {
-                        let mut tiles = Vec::new();
-
-                        for tile_x in 0..target_chunk_x {
-                            let mut tiles_y = Vec::new();
-                            for tile_y in 0..target_chunk_y {
-                                let lookup_x = (chunk_x * target_chunk_x) + tile_x;
-                                let lookup_y = (chunk_y * target_chunk_y) + tile_y;
-                                let chunk_pos = Vec2::new(lookup_x as f32, lookup_y as f32);
-
-                                tiles_y.push(if lookup_x < map.width as usize && lookup_y < map.height as usize {
-                                    let map_tile = match &layer.tiles {
-                                        tiled::LayerData::Finite(tiles) => {
-                                            &tiles[lookup_y][lookup_x]
-                                        }
-                                        _ => panic!("Infinte maps not supported"),
-                                    };
-                                    // tile not in this set
-                                    if map_tile.gid < tileset.first_gid
-                                        || map_tile.gid >= tileset.first_gid + tileset.tilecount.unwrap()
-                                    {
-                                        continue;
-                                    }
-                                    // Calculate positions
-                                    let vertex = match map.orientation {
-                                        tiled::Orientation::Orthogonal => {
-                                            let center = Map::project_ortho(
-                                                chunk_pos,
-                                                tile_width,
-                                                tile_height,
-                                            );
-
-                                            let start = Vec2::new(
-                                                center.x,
-                                                center.y - tile_height - tile_space,
-                                            );
-
-                                            let end = Vec2::new(
-                                                center.x + tile_width + tile_space,
-                                                center.y,
-                                            );
-
-                                            Vec4::new(start.x, start.y, end.x, end.y)
-                                        }
-                                        tiled::Orientation::Isometric => {
-                                            let center = Map::project_iso(
-                                                chunk_pos,
-                                                tile_width,
-                                                tile_height,
-                                            );
-
-                                            let start = Vec2::new(
-                                                center.x - tile_width / 2.0,
-                                                center.y - tile_height,
-                                            );
-
-                                            let end =
-                                                Vec2::new(center.x + tile_width / 2.0, center.y);
-
-                                            Vec4::new(start.x, start.y, end.x, end.y)
-                                        }
-                                        _ => {
-                                            panic!("Unsupported orientation {:?}", map.orientation)
-                                        }
-                                    };
-                                    // Get chunk tile.
-                                    Tile::from_layer_and_tileset(map_tile, tileset, chunk_pos, vertex)
-                                } else {
-                                    // Empty tile
-                                    Tile {
-                                        tile_id: 0,
-                                        pos: chunk_pos,
-                                        vertex: Vec4::new(0.0, 0.0, 0.0, 0.0),
-                                        uv: Vec4::new(0.0, 0.0, 0.0, 0.0),
-                                        flip_d: false,
-                                        flip_h: false,
-                                        flip_v: false,
-                                    }
-                                }); // end tiles_y.push(chunk_tile);
-                            }
-                            tiles.push(tiles_y);
-                        }
-
-                        let chunk = Chunk {
-                            position: Vec2::new(chunk_x as f32, chunk_y as f32),
-                            tiles,
-                        };
-                        chunks_y.push(chunk);
-                    }
-                    chunks.push(chunks_y);
-                }
-
-                let tileset_layer = TilesetLayer {
-                    tile_size: Vec2::new(tile_width, tile_height),
-                    chunks,
-                    tileset_guid: tileset.first_gid,
-                };
-                tileset_layers.push(tileset_layer);
+                
+                tileset_layers.push(TilesetLayer::new(&map, &layer, &tileset));
             }
 
-            let layer = Layer { tileset_layers };
+            let layer = MapLayer { tileset_layers };
             layers.push(layer);
         }
 
@@ -451,42 +400,6 @@ pub struct CreatedMapEntities {
     created_layer_entities: HashMap<(usize, u32), Vec<Entity>>,
     // maps object guid to texture atlas sprite entity
     created_object_entities: HashMap<u32, Vec<Entity>>,
-}
-
-#[derive(Bundle)]
-pub struct ChunkBundle {
-    pub map_parent: Handle<Map>, // tmp:chunks should be child entities of a toplevel map entity.
-    pub chunk: TileMapChunk,
-    pub main_pass: MainPass,
-    pub material: Handle<ColorMaterial>,
-    pub render_pipeline: RenderPipelines,
-    pub visible: Visible,
-    pub draw: Draw,
-    pub mesh: Handle<Mesh>,
-    pub transform: Transform,
-    pub global_transform: GlobalTransform,
-}
-
-impl Default for ChunkBundle {
-    fn default() -> Self {
-        Self {
-            map_parent: Handle::default(),
-            chunk: TileMapChunk::default(),
-            visible: Visible {
-                is_transparent: true,
-                ..Default::default()
-            },
-            draw: Default::default(),
-            main_pass: MainPass,
-            mesh: Handle::default(),
-            material: Handle::default(),
-            render_pipeline: RenderPipelines::from_pipelines(vec![RenderPipeline::new(
-                TILE_MAP_PIPELINE_HANDLE.typed(),
-            )]),
-            transform: Default::default(),
-            global_transform: Default::default(),
-        }
-    }
 }
 
 pub fn process_loaded_tile_maps(

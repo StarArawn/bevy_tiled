@@ -1,8 +1,4 @@
-use bevy::{
-    ecs::system::EntityCommands,
-    prelude::*,
-    utils::{HashMap},
-};
+use bevy::{ecs::system::EntityCommands, prelude::*, utils::HashMap};
 
 use crate::{DebugConfig, Map};
 
@@ -33,7 +29,6 @@ impl ObjectGroup {
     }
 }
 
-
 #[derive(Debug, Clone)]
 pub struct Object {
     pub shape: tiled::ObjectShape,
@@ -41,7 +36,7 @@ pub struct Object {
     pub position: Vec2,
     pub name: String,
     pub visible: bool,
-    pub gid: u32,             // sprite ID from tiled::Object
+    pub gid: u32,                 // sprite ID from tiled::Object
     pub tileset_gid: Option<u32>, // AKA first_gid
     pub sprite_index: Option<u32>,
 }
@@ -153,7 +148,6 @@ impl Object {
         let mut new_entity_commands = if let Some(texture_atlas) = texture_atlas {
             let sprite_index = self.sprite_index.expect("missing sprite index");
             let tileset_gid = self.tileset_gid.expect("missing tileset");
-
 
             // fetch tile for this object if it exists
             let object_tile_size = map
