@@ -11,13 +11,8 @@ pub use layers::*;
 mod objects;
 pub use objects::*;
 
-mod pipeline;
-pub use pipeline::*;
-mod tile_map;
-pub use tile_map::*;
-mod tile_chunk;
-pub use tile_chunk::*;
-
+mod view;
+pub use view::*;
 /// Adds support for GLTF file loading to Apps
 #[derive(Default)]
 pub struct TiledMapPlugin;

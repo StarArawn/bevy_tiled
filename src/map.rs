@@ -3,8 +3,6 @@ use anyhow::Result;
 use bevy::{
     prelude::*,
     reflect::TypeUuid,
-    render::mesh::Indices,
-    render::{mesh::VertexAttributeValues, pipeline::PrimitiveTopology},
     utils::{HashMap, HashSet},
 };
 use std::{
@@ -107,66 +105,9 @@ impl Map {
                 for x in 0..tileset_layer.chunks.len() {
                     let chunk_x = &tileset_layer.chunks[x];
                     for y in 0..chunk_x.len() {
-                        let chunk = &chunk_x[y];
-
-                        let mut positions: Vec<[f32; 3]> = Vec::new();
-                        let mut uvs: Vec<[f32; 2]> = Vec::new();
-                        let mut indices: Vec<u32> = Vec::new();
-
-                        let mut i = 0;
-                        for tile in chunk.tiles.iter().flat_map(|tiles_y| tiles_y.iter()) {
-                            if tile.tile_id < tileset_layer.tileset_guid {
-                                continue;
-                            }
-
-                            // X, Y
-                            positions.push([tile.vertex.x, tile.vertex.y, 0.0]);
-                            // X, Y + 1
-                            positions.push([tile.vertex.x, tile.vertex.w, 0.0]);
-                            // X + 1, Y + 1
-                            positions.push([tile.vertex.z, tile.vertex.w, 0.0]);
-                            // X + 1, Y
-                            positions.push([tile.vertex.z, tile.vertex.y, 0.0]);
-
-                            let mut next_uvs = [
-                                // X, Y
-                                [tile.uv.x, tile.uv.w],
-                                // X, Y + 1
-                                [tile.uv.x, tile.uv.y],
-                                // X + 1, Y + 1
-                                [tile.uv.z, tile.uv.y],
-                                // X + 1, Y
-                                [tile.uv.z, tile.uv.w],
-                            ];
-                            if tile.flip_d {
-                                next_uvs.swap(0, 2);
-                            }
-                            if tile.flip_h {
-                                next_uvs.reverse();
-                            }
-                            if tile.flip_v {
-                                next_uvs.reverse();
-                                next_uvs.swap(0, 2);
-                                next_uvs.swap(1, 3);
-                            }
-
-                            next_uvs.iter().for_each(|uv| uvs.push(*uv));
-
-                            indices.extend_from_slice(&[i + 0, i + 2, i + 1, i + 0, i + 3, i + 2]);
-
-                            i += 4;
-                        }
-
-                        if positions.len() > 0 {
-                            let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-                            mesh.set_attribute(
-                                "Vertex_Position",
-                                VertexAttributeValues::Float3(positions),
-                            );
-                            mesh.set_attribute("Vertex_Uv", VertexAttributeValues::Float2(uvs));
-                            mesh.set_indices(Some(Indices::U32(indices)));
+                        if let Some(mesh) = chunk_x[y].build_uv_mesh(tileset_layer.tileset_guid) {
                             meshes.push((layer_id as u32, tileset_layer.tileset_guid, mesh));
-                        }
+                        };
                     }
                 }
             }
