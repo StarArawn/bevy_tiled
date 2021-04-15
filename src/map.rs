@@ -361,6 +361,9 @@ pub fn process_loaded_tile_maps(
                             }
                         });
                     let mut chunk_entities: Vec<Entity> = Default::default();
+                    let layer_transform = tile_map_transform * Transform::from_translation(
+                        Vec3::new(tileset_layer.offset_x, -tileset_layer.offset_y, 0.0)
+                    );
 
                     for (_, tileset_guid, mesh) in chunk_mesh_list.iter() {
                         // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
@@ -376,7 +379,7 @@ pub fn process_loaded_tile_maps(
                                 material: material_handle.clone(),
                                 mesh: mesh.clone(),
                                 map_parent: map_handle.clone(),
-                                transform: tile_map_transform.clone(),
+                                transform: layer_transform,
                                 ..Default::default()
                             })
                             .id();
