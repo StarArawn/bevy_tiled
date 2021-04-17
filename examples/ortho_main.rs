@@ -1,5 +1,5 @@
 use bevy::{prelude::*, render::camera::Camera};
-use bevy_tiled_prototype::TiledMapCenter;
+use bevy_tiled_prototype::{MapReadyEvent, TiledMapCenter};
 
 fn main() {
     App::build()
@@ -8,6 +8,7 @@ fn main() {
         .add_system(bevy::input::system::exit_on_esc_system.system())
         .add_startup_system(setup.system())
         .add_system(camera_movement.system())
+        .add_system(set_texture_filters_to_nearest.system())
         .run();
 }
 
@@ -57,5 +58,21 @@ fn camera_movement(
         }
 
         transform.translation += time.delta_seconds() * direction * 1000.;
+    }
+}
+
+// demo of https://github.com/StarArawn/bevy_tiled/issues/47#issuecomment-817126515
+fn set_texture_filters_to_nearest(
+    mut map_ready_events: EventReader<MapReadyEvent>,
+    mut textures: ResMut<Assets<Texture>>,
+    texture_atlases: Res<Assets<TextureAtlas>>
+) {
+    // quick and dirty, run this for all textures every time a map is created/modified
+    if map_ready_events.iter().count() > 0 {
+        for (_, atlas) in texture_atlases.iter() {
+            if let Some(texture) = textures.get_mut(atlas.texture.clone()) {
+                texture.sampler.min_filter = bevy::render::texture::FilterMode::Nearest;
+            }
+        }
     }
 }
