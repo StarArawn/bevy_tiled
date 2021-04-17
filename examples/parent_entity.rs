@@ -6,11 +6,18 @@ use bevy_tiled_prototype::{MapRoot, TiledMapCenter};
 
 const SCALE: f32 = 0.25;
 
+#[derive(Debug, Default)]
+struct MovementData {
+    transform: Transform,
+}
+
 fn main() {
     App::build()
+        .insert_resource(MovementData::default())
         .add_plugins(DefaultPlugins)
         .add_plugin(bevy_tiled_prototype::TiledMapPlugin)
         .add_system(bevy::input::system::exit_on_esc_system.system())
+        .add_system(process_input.system())
         .add_system(move_parent_entity.system())
         .add_startup_system(setup.system())
         .run();
@@ -39,31 +46,38 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }
 
-fn move_parent_entity(
+fn process_input(
+    mut movement_data: ResMut<MovementData>,
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
+) {
+    let mut direction = Vec3::ZERO;
+
+    if keyboard_input.pressed(KeyCode::A) || keyboard_input.pressed(KeyCode::Left) {
+        direction -= Vec3::new(SCALE, 0.0, 0.0);
+    }
+
+    if keyboard_input.pressed(KeyCode::D) || keyboard_input.pressed(KeyCode::Right) {
+        direction += Vec3::new(SCALE, 0.0, 0.0);
+    }
+
+    if keyboard_input.pressed(KeyCode::W) || keyboard_input.pressed(KeyCode::Up) {
+        direction += Vec3::new(0.0, SCALE, 0.0);
+    }
+
+    if keyboard_input.pressed(KeyCode::S) || keyboard_input.pressed(KeyCode::Down) {
+        direction -= Vec3::new(0.0, SCALE, 0.0);
+    }
+
+    movement_data.transform.translation += time.delta_seconds() * direction * 1000.;
+    movement_data.transform.scale = Vec3::splat(SCALE);
+}
+
+fn move_parent_entity(
+    movement_data: Res<MovementData>,
     mut query: Query<(&MapRoot, &mut Transform)>,
 ) {
-    for (_, mut transform) in query.iter_mut() {
-        let mut direction = Vec3::ZERO;
-
-        if keyboard_input.pressed(KeyCode::A) {
-            direction -= Vec3::new(SCALE, 0.0, 0.0);
-        }
-
-        if keyboard_input.pressed(KeyCode::D) {
-            direction += Vec3::new(SCALE, 0.0, 0.0);
-        }
-
-        if keyboard_input.pressed(KeyCode::W) {
-            direction += Vec3::new(0.0, SCALE, 0.0);
-        }
-
-        if keyboard_input.pressed(KeyCode::S) {
-            direction -= Vec3::new(0.0, SCALE, 0.0);
-        }
-
-        transform.translation += time.delta_seconds() * direction * 1000.;
-        transform.scale = Vec3::splat(SCALE);
-    }
+   for (_, mut transform) in query.iter_mut() {
+       transform.clone_from(&movement_data.transform);
+   }
 }

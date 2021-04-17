@@ -12,7 +12,7 @@ Feel free to use this code as a reference for your own custom tile mapping solut
 
 The `main` branch of this repository targets Bevy 0.5. When using bevy_tiled, please make sure your version of Bevy matches the version referenced by this library. There are versions for 0.4 and 0.3 as well.
 
-If you were using framp's fork, it is currently merged in and mirrored by the [v0.1.0-bevy-0.4](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.1.0-bevy-0.4) release. For a few more bugfixes, you can point to the [v0.1.1-bevy-0.4](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.1.1-bevy-0.4) tag. Object support in Bevy 0.4 is usable, and is an [open PR](https://github.com/StarArawn/bevy_tiled/pull/41), targetting the `bevy-0.4` branch and published as the [v0.2.1-rc1-bevy-0.4](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.2.1-rc1-bevy-0.4) tag.
+If you were using framp's fork for Bevy 0.4, it is currently merged in and mirrored by the [v0.1.0-bevy-0.4](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.1.0-bevy-0.4) release. For a few more bugfixes, you can point to the [v0.1.1-bevy-0.4](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.1.1-bevy-0.4) tag. Object support in Bevy 0.4 is usable, and is an [open PR](https://github.com/StarArawn/bevy_tiled/pull/41), targetting the `bevy-0.4` branch and published as the [v0.2.1-rc1-bevy-0.4](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.2.1-rc1-bevy-0.4) tag.
 
 For those of you relying on the old bevy_tiled, you will want to point your Cargo.toml to the `bevy-0.3` branch or the [v0.1.0-bevy-0.3](https://github.com/StarArawn/bevy_tiled/releases/tag/v0.1.0-bevy-0.3) tag. There is a small fix there for map positioning, and it is otherwise unchanged.
 
@@ -42,21 +42,21 @@ For now, TiledMapBundle is just a configuration object. If you would like access
     parent_option: Some(entity)
 
 Then, both chunks and objects will be inserted as children to this entity, which will be tagged with MapRoot. This API is likely to change, but we have an [example](/examples/parent_entity.rs) for how it currently works.
-## Object Layer Support
+## Object Group Support
 
-Object layers are now supported. They will be skipped if not visible. Individual objects that are invisible
+Object Grous are now supported. They will be skipped if not visible. Individual objects that are invisible
 will be spawned with is_visible set to false. You may pass into the configuration object:
 
     debug_config: DebugConfig { enabled: true, material: None }
 
 to show a color mesh for objects that have no tile sprite. `material: None` will use the default material.
-This is only supported for rects at this time. Some other objects will show up as small squares improve support.
+This is only supported for rects at this time. Some other objects will show up as small squares until we improve support.
 
 To see objects and debugging in action, run the `ortho_debug` example which will enable debug viewing of objects.
 Use the spacebar to toggle objects.
 
 ```sh
-# Runs the isometric tile map example
+# Runs the debug/objects example
 cargo run --example ortho_debug
 ```
 
@@ -71,7 +71,7 @@ These both have:
     pub map_entity_option: Option<Entity>,
     pub map_handle: Handle<Map>,
 
-and ObjectReadyEvent additionally includes the entity for the object itself
+and ObjectReadyEvent additionally includes `entity: Entity` for what the object was spawned as.
 
 ## Hot reload
 
