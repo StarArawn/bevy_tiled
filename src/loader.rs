@@ -1,14 +1,22 @@
+use std::path::{Path, PathBuf};
+
 use crate::map::Map;
 use anyhow::Result;
 use bevy::{
     asset::{AssetLoader, AssetPath, LoadContext, LoadedAsset},
     utils::BoxedFuture,
 };
-
-#[derive(Default)]
-pub struct TiledMapLoader;
+pub struct TiledMapLoader {
+    asset_folder: PathBuf,
+}
 
 impl TiledMapLoader {
+    pub fn new<P: AsRef<Path>>(path: P) -> Self {
+        TiledMapLoader {
+            asset_folder: path.as_ref().to_path_buf(),
+        }
+    }
+
     pub fn remove_tile_flags(tile: u32) -> u32 {
         let tile = tile & !ALL_FLIP_FLAGS;
         tile
@@ -29,7 +37,7 @@ impl AssetLoader for TiledMapLoader {
     ) -> BoxedFuture<'a, Result<(), anyhow::Error>> {
         Box::pin(async move {
             let path = load_context.path();
-            let mut map = Map::try_from_bytes(path, bytes.into())?;
+            let mut map = Map::try_from_bytes(self.asset_folder.as_path(), path, bytes.into())?;
             let dependencies = map
                 .asset_dependencies
                 .drain(..)
