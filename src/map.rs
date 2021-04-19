@@ -4,7 +4,6 @@ use crate::{
 };
 use anyhow::Result;
 use bevy::{
-    asset,
     prelude::*,
     reflect::TypeUuid,
     utils::{HashMap, HashSet},
@@ -56,11 +55,9 @@ impl Map {
 
     pub fn try_from_bytes(asset_folder: &Path, asset_path: &Path, bytes: Vec<u8>) -> Result<Map> {
         #[cfg(all(not(target_arch = "wasm32"), not(target_os = "android")))]
-        let root_dir = asset::FileAssetIo::get_root_path();
-        #[cfg(target_arch = "wasm32")]
-        let root_dir = asset::WasmAssetIo::get_root_path();
-        #[cfg(target_os = "android")]
-        let root_dir = asset::AndroidAssetIo::get_root_path();
+        let root_dir = bevy::asset::FileAssetIo::get_root_path();
+        #[cfg(any(target_arch = "wasm32", target_os = "android"))]
+        let root_dir = PathBuf::from("");
         
         let map = tiled::parse_with_path(
             BufReader::new(bytes.as_slice()),
