@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::camera::Camera, app::CoreStage::PreUpdate,};
+use bevy::{app::CoreStage::PreUpdate, prelude::*, render::camera::Camera};
 use bevy_tiled_prototype::{MapReadyEvent, TiledMapCenter};
 
 fn main() {
@@ -67,7 +67,7 @@ fn camera_movement(
 fn set_texture_filters_to_nearest(
     mut map_ready_events: EventReader<MapReadyEvent>,
     mut textures: ResMut<Assets<Texture>>,
-    texture_atlases: Res<Assets<TextureAtlas>>
+    texture_atlases: Res<Assets<TextureAtlas>>,
 ) {
     // quick and dirty, run this for all textures every time a map is created/modified
     if map_ready_events.iter().count() > 0 {

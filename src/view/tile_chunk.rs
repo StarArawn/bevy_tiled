@@ -1,7 +1,15 @@
-use bevy::{math::{Vec2, Vec4}, render::{draw::Visible, mesh::{Indices, VertexAttributeValues}, pipeline::{PrimitiveTopology, RenderPipeline}, render_graph::base::MainPass}};
+use bevy::{
+    math::{Vec2, Vec4},
+    render::{
+        draw::Visible,
+        mesh::{Indices, VertexAttributeValues},
+        pipeline::{PrimitiveTopology, RenderPipeline},
+        render_graph::base::MainPass,
+    },
+};
 use tiled::{LayerTile, Tileset};
 
-use crate::{Map, TILE_MAP_PIPELINE_HANDLE, TileMapChunk, loader::TiledMapLoader};
+use crate::{loader::TiledMapLoader, Map, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 use bevy::prelude::*;
 
 #[derive(Debug)]
@@ -61,10 +69,7 @@ impl LayerChunk {
 
         if positions.len() > 0 {
             let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-            mesh.set_attribute(
-                "Vertex_Position",
-                VertexAttributeValues::Float3(positions),
-            );
+            mesh.set_attribute("Vertex_Position", VertexAttributeValues::Float3(positions));
             mesh.set_attribute("Vertex_Uv", VertexAttributeValues::Float2(uvs));
             mesh.set_indices(Some(Indices::U32(indices)));
             Some(mesh)
@@ -73,7 +78,6 @@ impl LayerChunk {
         }
     }
 }
-
 
 #[derive(Bundle)]
 pub struct ChunkBundle {

@@ -58,7 +58,7 @@ impl Map {
         let root_dir = bevy::asset::FileAssetIo::get_root_path();
         #[cfg(any(target_arch = "wasm32", target_os = "android"))]
         let root_dir = PathBuf::from("");
-        
+
         let map = tiled::parse_with_path(
             BufReader::new(bytes.as_slice()),
             &root_dir.join(&asset_folder.join(asset_path)),
@@ -358,9 +358,12 @@ pub fn process_loaded_tile_maps(
                             }
                         });
                     let mut chunk_entities: Vec<Entity> = Default::default();
-                    let layer_transform = tile_map_transform * Transform::from_translation(
-                        Vec3::new(tileset_layer.offset_x, -tileset_layer.offset_y, 0.0)
-                    );
+                    let layer_transform = tile_map_transform
+                        * Transform::from_translation(Vec3::new(
+                            tileset_layer.offset_x,
+                            -tileset_layer.offset_y,
+                            0.0,
+                        ));
 
                     for (_, tileset_guid, mesh) in chunk_mesh_list.iter() {
                         // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.

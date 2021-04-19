@@ -77,7 +77,7 @@ fn move_parent_entity(
     movement_data: Res<MovementData>,
     mut query: Query<(&MapRoot, &mut Transform)>,
 ) {
-   for (_, mut transform) in query.iter_mut() {
-       transform.clone_from(&movement_data.transform);
-   }
+    for (_, mut transform) in query.iter_mut() {
+        transform.clone_from(&movement_data.transform);
+    }
 }

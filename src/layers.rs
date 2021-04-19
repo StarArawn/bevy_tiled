@@ -1,4 +1,4 @@
-use crate::{LayerChunk, TileChunk, utils::project_ortho, utils::project_iso, };
+use crate::{utils::project_iso, utils::project_ortho, LayerChunk, TileChunk};
 use bevy::prelude::*;
 
 #[derive(Debug)]
@@ -7,7 +7,7 @@ pub struct TilesetLayer {
     pub chunks: Vec<Vec<LayerChunk>>,
     pub tileset_guid: u32,
     pub offset_x: f32,
-    pub offset_y: f32
+    pub offset_y: f32,
 }
 impl TilesetLayer {
     pub fn new(map: &tiled::Map, layer: &tiled::Layer, tileset: &tiled::Tileset) -> TilesetLayer {
@@ -116,7 +116,7 @@ impl TilesetLayer {
             chunks,
             tileset_guid: tileset.first_gid,
             offset_x: layer.offset_x,
-            offset_y: layer.offset_y
+            offset_y: layer.offset_y,
         }
     }
 }
