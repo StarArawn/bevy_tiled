@@ -1,4 +1,4 @@
-use bevy::{prelude::*, render::camera::Camera};
+use bevy::{prelude::*, render::camera::Camera, app::CoreStage::PreUpdate,};
 use bevy_tiled_prototype::{MapReadyEvent, TiledMapCenter};
 
 fn main() {
@@ -8,7 +8,8 @@ fn main() {
         .add_system(bevy::input::system::exit_on_esc_system.system())
         .add_startup_system(setup.system())
         .add_system(camera_movement.system())
-        .add_system(set_texture_filters_to_nearest.system())
+        // Needs to run before rendering to set texture atlas filter for new tiles- would be better to use states
+        .add_system_to_stage(PreUpdate, set_texture_filters_to_nearest.system())
         .run();
 }
 
@@ -62,6 +63,7 @@ fn camera_movement(
 }
 
 // demo of https://github.com/StarArawn/bevy_tiled/issues/47#issuecomment-817126515
+//  Would be cleaner to put this in a separate AppState, transitioning out after textures loaded
 fn set_texture_filters_to_nearest(
     mut map_ready_events: EventReader<MapReadyEvent>,
     mut textures: ResMut<Assets<Texture>>,
