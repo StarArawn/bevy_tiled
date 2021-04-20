@@ -18,7 +18,7 @@ For those of you relying on the old bevy_tiled, you will want to point your Carg
 
 ## Basic Setup
 
-Follow the Rust [Getting Started](https://www.rust-lang.org/learn/get-started) and make sure you have `rustc` compiler and `cargo` build system available on yor machine.
+Follow the Rust [Getting Started](https://www.rust-lang.org/learn/get-started) and make sure you have `rustc` compiler and `cargo` build system available on your machine.
 
 Clone this repo and try running some of the [examples](/examples):
 
@@ -44,13 +44,9 @@ For now, TiledMapBundle is just a configuration object. If you would like access
 Then, both chunks and objects will be inserted as children to this entity, which will be tagged with MapRoot. This API is likely to change, but we have an [example](/examples/parent_entity.rs) for how it currently works.
 ## Object Group Support
 
-Object Grous are now supported. They will be skipped if not visible. Individual objects that are invisible
-will be spawned with is_visible set to false. You may pass into the configuration object:
-
-    debug_config: DebugConfig { enabled: true, material: None }
-
-to show a color mesh for objects that have no tile sprite. `material: None` will use the default material.
-This is only supported for rects at this time. Some other objects will show up as small squares until we improve support.
+Object Groups are now supported for orthographic maps. They will be skipped if not visible.
+Individual objects that are invisible will be spawned with is_visible set to false. 
+### Example
 
 To see objects and debugging in action, run the `ortho_debug` example which will enable debug viewing of objects.
 Use the spacebar to toggle objects.
@@ -60,6 +56,20 @@ Use the spacebar to toggle objects.
 cargo run --example ortho_debug
 ```
 
+### Debug visibility
+
+You may pass into the configuration object:
+
+    debug_config: DebugConfig { enabled: true, material: None }
+
+to show a color mesh for objects that have no tile sprite. `material: None` will use the default material.
+This is only supported for rects at this time. Some other objects will show up as small squares until we improve support.
+
+### Embedded Objects in Tiles
+
+The Tiled editor allows you to specify collision regions within tiles. If your map has objects used as sprites, embedded rectangular objects will be included. These are separately spawned as object children to simplify positioning. 
+
+Objects spawned from tile map layers is currently not supported.
 ## Events
 
 There are two events that you can listen for when you spawn a map.
@@ -85,9 +95,19 @@ Then when you save your map, it should update in the application.
 
 Use `default-features=false, features=["web"]` in your project's `Cargo.toml`. Tiled maps using Zstd compression are not supported.
 
-## Top-needed features
+## Contributing
+
+We are so happy to be seeing more PRs! Keep 'em coming!
+### Top-requested features
 
   * better support for isometric maps
-  * support for embeded objects in tiles
+    * ~tile layer offsets~ Thanks Dint!
+    * isometric projection for rectangular objects
+  * support for collision objects in tiles
+    * ~objectgroups in objects~ implemented recently for rects!
+    * objectgroups within tiles
   * support for embedded images in Tmx files
+  * support for flipping sprite objects, and their associated collision regions
   * support for animations
+  * support for tint color and opacity
+
