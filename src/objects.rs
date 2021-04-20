@@ -34,7 +34,9 @@ pub struct Object {
     pub shape: tiled::ObjectShape,
     pub props: tiled::Properties,
     pub position: Vec2,
+    pub size: Vec2,
     pub name: String,
+    pub obj_type: String,
     pub visible: bool,
     pub gid: u32,                 // sprite ID from tiled::Object
     pub tileset_gid: Option<u32>, // AKA first_gid
@@ -52,7 +54,9 @@ impl Object {
             tileset_gid: None,
             sprite_index: None,
             position: Vec2::new(original_object.x, original_object.y),
+            size: Vec2::new(original_object.height, original_object.width),
             name: original_object.name.clone(),
+            obj_type: original_object.obj_type.clone(),
         }
     }
 
