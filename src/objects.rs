@@ -2,11 +2,26 @@ use bevy::{ecs::system::EntityCommands, prelude::*, utils::HashMap};
 
 use crate::{DebugConfig, Map};
 
+trait ShallowClone<T> {
+    fn shallow_clone(&self) -> Self;
+}
+impl ShallowClone<ObjectGroup> for tiled::ObjectGroup {
+    fn shallow_clone(&self) -> Self {
+        tiled::ObjectGroup {
+            name: self.name.to_owned(),
+            opacity: self.opacity,
+            visible: self.visible,
+            objects: Vec::default(),
+            colour: self.colour.clone(),
+            layer_index: self.layer_index.clone(),
+            properties: self.properties.clone(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct ObjectGroup {
-    pub name: String,
-    pub opacity: f32,
-    pub visible: bool,
+    pub data: tiled::ObjectGroup,
     pub objects: Vec<Object>,
     idx: usize,
 }
@@ -19,10 +34,8 @@ impl ObjectGroup {
     ) -> ObjectGroup {
         // println!("grp {}", inner.name.to_string());
         ObjectGroup {
-            name: inner.name.to_string(),
             idx,
-            opacity: inner.opacity,
-            visible: inner.visible,
+            data: inner.shallow_clone(),
             objects: inner
                 .objects
                 .iter().enumerate()

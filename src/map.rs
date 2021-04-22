@@ -26,7 +26,8 @@ pub struct Map {
     pub map: tiled::Map,
     pub meshes: Vec<(u32, u32, Mesh)>,
     pub layers: Vec<MapLayer>,
-    pub groups: Vec<ObjectGroup>,
+    pub groups: Vec<ObjectGroup>, // contains Objects
+    // pub tiles: Vec<Tile>,
     pub tile_size: Vec2,
     pub image_folder: std::path::PathBuf,
     pub asset_dependencies: Vec<PathBuf>,
@@ -423,7 +424,7 @@ pub fn process_loaded_tile_maps(
                             }
                         });
                 }
-                if !object_group.visible {
+                if !object_group.data.visible {
                     continue;
                 }
 
