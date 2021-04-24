@@ -49,7 +49,7 @@ Individual objects that are invisible will be spawned with is_visible set to fal
 ### Example
 
 To see objects and debugging in action, run the `ortho_debug` example which will enable debug viewing of objects.
-Use the spacebar to toggle objects.
+Use the spacebar to toggle objects. Rects within tiles are also shown.
 
 ```sh
 # Runs the debug/objects example

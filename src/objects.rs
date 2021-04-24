@@ -13,7 +13,7 @@ pub struct ObjectGroup {
 impl ObjectGroup {
     pub fn new_with_tile_ids(
         inner: &tiled::ObjectGroup,
-        tile_gids: &HashMap<u32, u32>,
+        tileset_gid_by_gid: &HashMap<u32, u32>,
     ) -> ObjectGroup {
         // println!("grp {}", inner.name.to_string());
         ObjectGroup {
@@ -23,7 +23,7 @@ impl ObjectGroup {
             objects: inner
                 .objects
                 .iter()
-                .map(|obj| Object::new_with_tile_ids(obj, tile_gids))
+                .map(|obj| Object::new_with_tile_ids(obj, tileset_gid_by_gid))
                 .collect(),
         }
     }
@@ -154,7 +154,7 @@ impl Object {
         let dimensions = self
             .dimensions()
             .expect("Don't know how to handle object without dimensions");
-
+    
         let mut new_entity_commands = if let Some(texture_atlas) = texture_atlas {
             let sprite_index = self.sprite_index.expect("missing sprite index");
             let tileset_gid = self.tileset_gid.expect("missing tileset");
@@ -169,7 +169,7 @@ impl Object {
             let object_tile = object_tileset.and_then(|ts| ts
                 .tiles.iter().find(|&tile| tile.id + ts.first_gid == self.gid)
             );
-
+            
             // use object dimensions and tile size to determine extra scale to apply for tile objects
             let tile_scale = if let Some(size) = object_tile_size {
                 Some((dimensions / size).extend(1.0))
@@ -191,6 +191,7 @@ impl Object {
                 ..Default::default()
             });
             // spawn embedded objects as children
+            let tile_size = object_tile_size.expect("child object needs parent to have a size");
             object_tile.map(|tile| {
                 entity_commands.with_children(|builder| {
                     //builder.spawn
@@ -199,11 +200,12 @@ impl Object {
                             let marker_object = Object::new(obj);
 
                             let mut embedded_object_transform = Transform::from_scale(Vec3::splat(1.0));
-                            embedded_object_transform.translation =
-                                Vec3::new(obj.x, -obj.y, 0.00005) +
-                                -Vec3::new(self.size.x, -self.size.y, 0.01) / 2.0 / tile_scale.unwrap_or(Vec3::splat(1.0)) +
-                                Vec3::new(obj.width, -obj.height, 0.01) / 2.0;
-
+                            embedded_object_transform.translation = Vec3::new(
+                                obj.x -(tile_size.x - obj.width) / 2.0, //(self.size.y / tile_scale.unwrap_or(Vec3::ONE).y - obj.height) / 2.0 - obj.y,
+                                -obj.y + (tile_size.y - obj.height) / 2.0, //(self.size.y / tile_scale.unwrap_or(Vec3::ONE).y - obj.height) / 2.0 - obj.y,
+                                0.0001
+                            );
+                            //println!("{:?},{:?}", tile_scale.unwrap(), embedded_object_transform.translation );
                             let size  = marker_object.dimensions().expect("embedded object needs dimension");
 
                             builder.spawn_bundle(

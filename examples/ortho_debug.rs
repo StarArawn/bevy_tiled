@@ -17,7 +17,7 @@ fn main() {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(bevy_tiled_prototype::TiledMapBundle {
-        map_asset: asset_server.load("ortho-map.tmx"),
+        map_asset: asset_server.load("ortho-debug.tmx"),
         center: TiledMapCenter(true),
         origin: Transform::from_scale(Vec3::new(SCALE, SCALE, 1.0)),
         debug_config: DebugConfig {
