@@ -3,7 +3,7 @@ use bevy_tiled_prototype::{DebugConfig, Object, TiledMapCenter};
 
 // this example demonstrates debugging objects. Hit spacebar to toggle them
 
-const SCALE: f32 = 2.0;
+const SCALE: f32 = 4.0;
 
 fn main() {
     App::build()

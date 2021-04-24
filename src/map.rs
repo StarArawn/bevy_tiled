@@ -26,7 +26,7 @@ pub struct Map {
     pub map: tiled::Map,
     pub meshes: Vec<(u32, u32, Mesh)>,
     pub layers: Vec<MapLayer>,
-    pub groups: Vec<ObjectGroup>,
+    pub groups: Vec<ObjectGroup>, // contains Objects
     pub tile_size: Vec2,
     pub image_folder: std::path::PathBuf,
     pub asset_dependencies: Vec<PathBuf>,
@@ -68,21 +68,20 @@ impl Map {
         let mut groups = Vec::new();
 
         // this only works if gids are uniques across all maps used - todo move into ObjectGroup?
-        let mut tile_gids: HashMap<u32, u32> = Default::default();
-
+        let mut tileset_id_by_gid: HashMap<u32, u32> = Default::default();
         for tileset in &map.tilesets {
             for i in tileset.first_gid..(tileset.first_gid + tileset.tilecount.unwrap_or(1)) {
-                tile_gids.insert(i, tileset.first_gid);
+                tileset_id_by_gid.insert(i, tileset.first_gid);
             }
         }
 
         let mut object_gids: HashSet<u32> = Default::default();
         for object_group in map.object_groups.iter() {
             // recursively creates objects in the groups:
-            let tiled_o_g = ObjectGroup::new_with_tile_ids(object_group, &tile_gids);
+            let tiled_o_g = ObjectGroup::new_with_tile_ids(object_group, &tileset_id_by_gid);
             // keep track of which objects will need to have tiles loaded
             tiled_o_g.objects.iter().for_each(|o| {
-                tile_gids.get(&o.gid).map(|first_gid| {
+                tileset_id_by_gid.get(&o.gid).map(|first_gid| {
                     object_gids.insert(*first_gid);
                 });
             });
