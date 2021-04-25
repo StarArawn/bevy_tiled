@@ -13,7 +13,7 @@ pub struct ObjectGroup {
 impl ObjectGroup {
     pub fn new_with_tile_ids(
         inner: &tiled::ObjectGroup,
-        tileset_gid_by_gid: &HashMap<u32, u32>,
+        tileset_by_gid: &HashMap<u32, tiled::Tileset>,
     ) -> ObjectGroup {
         // println!("grp {}", inner.name.to_string());
         ObjectGroup {
@@ -23,7 +23,7 @@ impl ObjectGroup {
             objects: inner
                 .objects
                 .iter()
-                .map(|obj| Object::new_with_tile_ids(obj, tileset_gid_by_gid))
+                .map(|obj| Object::new_with_tile_ids(obj, tileset_by_gid))
                 .collect(),
         }
     }
@@ -41,6 +41,7 @@ pub struct Object {
     pub gid: u32,                 // sprite ID from tiled::Object
     pub tileset_gid: Option<u32>, // AKA first_gid
     pub sprite_index: Option<u32>,
+    pub tile_scale: Option<Vec2>,
 }
 
 impl Object {
@@ -53,6 +54,7 @@ impl Object {
             visible: original_object.visible,
             tileset_gid: None,
             sprite_index: None,
+            tile_scale: None,
             position: Vec2::new(original_object.x, original_object.y),
             size: Vec2::new(original_object.width, original_object.height),
             name: original_object.name.clone(),
@@ -66,16 +68,26 @@ impl Object {
 
     pub fn new_with_tile_ids(
         original_object: &tiled::Object,
-        tileset_id_by_gid: &HashMap<u32, u32>,
+        tileset_by_gid: &HashMap<u32, tiled::Tileset>,
     ) -> Object {
         // println!("obj {}", original_object.gid.to_string());
         let mut o = Object::new(original_object);
-        o.set_tile_ids(tileset_id_by_gid);
+        o.set_tile_ids(tileset_by_gid);
         o
     }
-    pub fn set_tile_ids(&mut self, tileset_id_by_gid: &HashMap<u32, u32>) {
-        self.tileset_gid = tileset_id_by_gid.get(&self.gid).cloned();
+    pub fn set_tile_ids(&mut self, tileset_by_gid: &HashMap<u32, tiled::Tileset>) {
+        let tileset = tileset_by_gid.get(&self.gid);
+        self.tileset_gid = tileset.map(|ts| ts.first_gid.clone());
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid);
+
+        // compute scale from tileset size to new height/widtho
+        if let &(Some(ts), Some(dims)) = &(tileset, self.dimensions()) {
+            self.tile_scale = Some(Vec2::new(
+                dims.x / ts.tile_width as f32,
+                dims.y / ts.tile_height as f32,
+            ));
+        }
+
     }
 
     pub fn transform_from_map(
@@ -154,7 +166,7 @@ impl Object {
         let dimensions = self
             .dimensions()
             .expect("Don't know how to handle object without dimensions");
-    
+
         let mut new_entity_commands = if let Some(texture_atlas) = texture_atlas {
             let sprite_index = self.sprite_index.expect("missing sprite index");
             let tileset_gid = self.tileset_gid.expect("missing tileset");
@@ -169,7 +181,7 @@ impl Object {
             let object_tile = object_tileset.and_then(|ts| ts
                 .tiles.iter().find(|&tile| tile.id + ts.first_gid == self.gid)
             );
-            
+
             // use object dimensions and tile size to determine extra scale to apply for tile objects
             let tile_scale = if let Some(size) = object_tile_size {
                 Some((dimensions / size).extend(1.0))

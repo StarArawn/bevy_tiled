@@ -68,21 +68,21 @@ impl Map {
         let mut groups = Vec::new();
 
         // this only works if gids are uniques across all maps used - todo move into ObjectGroup?
-        let mut tileset_id_by_gid: HashMap<u32, u32> = Default::default();
+        let mut tileset_by_gid: HashMap<u32, tiled::Tileset> = Default::default();
         for tileset in &map.tilesets {
             for i in tileset.first_gid..(tileset.first_gid + tileset.tilecount.unwrap_or(1)) {
-                tileset_id_by_gid.insert(i, tileset.first_gid);
+                tileset_by_gid.insert(i, tileset.clone());
             }
         }
 
         let mut object_gids: HashSet<u32> = Default::default();
         for object_group in map.object_groups.iter() {
             // recursively creates objects in the groups:
-            let tiled_o_g = ObjectGroup::new_with_tile_ids(object_group, &tileset_id_by_gid);
+            let tiled_o_g = ObjectGroup::new_with_tile_ids(object_group, &tileset_by_gid);
             // keep track of which objects will need to have tiles loaded
             tiled_o_g.objects.iter().for_each(|o| {
-                tileset_id_by_gid.get(&o.gid).map(|first_gid| {
-                    object_gids.insert(*first_gid);
+                tileset_by_gid.get(&o.gid).map(|ts| {
+                    object_gids.insert(ts.first_gid);
                 });
             });
             groups.push(tiled_o_g);
