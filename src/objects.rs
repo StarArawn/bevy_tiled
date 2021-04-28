@@ -54,7 +54,7 @@ impl Object {
             tileset_gid: None,
             sprite_index: None,
             position: Vec2::new(original_object.x, original_object.y),
-            size: Vec2::new(original_object.height, original_object.width),
+            size: Vec2::new(original_object.width, original_object.height),
             name: original_object.name.clone(),
             obj_type: original_object.obj_type.clone(),
         }
