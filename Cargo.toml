@@ -1,7 +1,7 @@
 [package]
 name = "bevy_tiled_prototype"
 description = "A plugin for rendering tiled maps."
-version = "0.2.4"
+version = "0.2.5"
 authors = ["John Mitchell", "Daniel Taub<dmtaub@gmail.com>", "Rob Parrett<robparrett@gmail.com>"]
 homepage = "https://github.com/StarArawn/bevy_tiled"
 repository = "https://github.com/StarArawn/bevy_tiled"
