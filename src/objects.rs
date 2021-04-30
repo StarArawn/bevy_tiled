@@ -2,28 +2,44 @@ use bevy::{ecs::system::EntityCommands, prelude::*, utils::HashMap};
 
 use crate::{DebugConfig, Map, loader::TiledMapLoader};
 
+trait ShallowClone<T> {
+    fn shallow_clone(&self) -> Self;
+}
+impl ShallowClone<ObjectGroup> for tiled::ObjectGroup {
+    fn shallow_clone(&self) -> Self {
+        tiled::ObjectGroup {
+            name: self.name.to_owned(),
+            opacity: self.opacity,
+            visible: self.visible,
+            objects: Vec::default(),
+            colour: self.colour.clone(),
+            layer_index: self.layer_index.clone(),
+            properties: self.properties.clone(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct ObjectGroup {
-    pub name: String,
-    pub opacity: f32,
-    pub visible: bool,
+    pub data: tiled::ObjectGroup,
     pub objects: Vec<Object>,
+    idx: usize,
 }
 
 impl ObjectGroup {
     pub fn new_with_tile_ids(
         inner: &tiled::ObjectGroup,
         tile_gids: &HashMap<u32, u32>,
+        idx: usize,
     ) -> ObjectGroup {
         // println!("grp {}", inner.name.to_string());
         ObjectGroup {
-            name: inner.name.to_string(),
-            opacity: inner.opacity,
-            visible: inner.visible,
+            idx,
+            data: inner.shallow_clone(),
             objects: inner
                 .objects
-                .iter()
-                .map(|obj| Object::new_with_tile_ids(obj, tile_gids))
+                .iter().enumerate()
+                .map(|(i, obj)| Object::new_with_tile_ids(obj, tile_gids, i, idx))
                 .collect(),
         }
     }
@@ -41,10 +57,12 @@ pub struct Object {
     pub gid: u32,                 // sprite ID from tiled::Object
     pub tileset_gid: Option<u32>, // AKA first_gid
     pub sprite_index: Option<u32>,
+    pub(crate) grp_idx: usize,
+    pub(crate) obj_idx: usize,
 }
 
 impl Object {
-    pub fn new(original_object: &tiled::Object) -> Object {
+    pub fn new(original_object: &tiled::Object, grp_idx: usize, obj_idx: usize) -> Object {
         // println!("obj {} {}", original_object.name, original_object.visible.to_string());
         Object {
             shape: original_object.shape.clone(),
@@ -57,6 +75,8 @@ impl Object {
             size: Vec2::new(original_object.width, original_object.height),
             name: original_object.name.clone(),
             obj_type: original_object.obj_type.clone(),
+            grp_idx,
+            obj_idx,
         }
     }
 
@@ -67,9 +87,11 @@ impl Object {
     pub fn new_with_tile_ids(
         original_object: &tiled::Object,
         tile_gids: &HashMap<u32, u32>,
+        idx: usize,
+        grp_idx: usize,
     ) -> Object {
         // println!("obj {}", original_object.gid.to_string());
-        let mut o = Object::new(original_object);
+        let mut o = Object::new(original_object, grp_idx, idx);
         o.set_tile_ids(tile_gids);
         o
     }

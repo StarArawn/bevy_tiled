@@ -1,5 +1,5 @@
 use crate::{
-    objects::ObjectGroup, utils::project_iso, utils::project_ortho, ChunkBundle, MapLayer,
+    objects::Object, objects::ObjectGroup, utils::project_iso, utils::project_ortho, ChunkBundle, MapLayer,
     TileMapChunk, TilesetLayer,
 };
 use anyhow::Result;
@@ -26,7 +26,8 @@ pub struct Map {
     pub map: tiled::Map,
     pub meshes: Vec<(u32, u32, Mesh)>,
     pub layers: Vec<MapLayer>,
-    pub groups: Vec<ObjectGroup>,
+    pub groups: Vec<ObjectGroup>, // contains Objects
+    // pub tiles: Vec<Tile>,
     pub tile_size: Vec2,
     pub image_folder: std::path::PathBuf,
     pub asset_dependencies: Vec<PathBuf>,
@@ -53,6 +54,10 @@ impl Map {
         }
     }
 
+    pub fn tiled_object(&self, crate_obj: Object) -> &tiled::Object {
+        &self.map.object_groups[crate_obj.grp_idx].objects[crate_obj.obj_idx]
+    }
+
     pub fn try_from_bytes(asset_folder: &Path, asset_path: &Path, bytes: Vec<u8>) -> Result<Map> {
         #[cfg(all(not(target_arch = "wasm32"), not(target_os = "android")))]
         let root_dir = bevy::asset::FileAssetIo::get_root_path();
@@ -77,9 +82,9 @@ impl Map {
         }
 
         let mut object_gids: HashSet<u32> = Default::default();
-        for object_group in map.object_groups.iter() {
+        for (i, object_group) in map.object_groups.iter().enumerate() {
             // recursively creates objects in the groups:
-            let tiled_o_g = ObjectGroup::new_with_tile_ids(object_group, &tile_gids);
+            let tiled_o_g = ObjectGroup::new_with_tile_ids(object_group, &tile_gids, i);
             // keep track of which objects will need to have tiles loaded
             tiled_o_g.objects.iter().for_each(|o| {
                 tile_gids.get(&o.gid).map(|first_gid| {
@@ -419,7 +424,7 @@ pub fn process_loaded_tile_maps(
                             }
                         });
                 }
-                if !object_group.visible {
+                if !object_group.data.visible {
                     continue;
                 }
 
