@@ -1,10 +1,5 @@
-use bevy_ecs_tilemap::prelude::*;
 use anyhow::Result;
-use bevy::{
-    prelude::*,
-    reflect::TypeUuid,
-    utils::{HashMap, HashSet},
-};
+use bevy::{prelude::*, reflect::TypeUuid, utils::{HashMap, HashSet}};
 use std::{
     io::BufReader,
     path::{Path, PathBuf},
@@ -105,7 +100,7 @@ pub fn process_loaded_tile_maps(
     asset_server: Res<AssetServer>,
     mut map_events: EventReader<AssetEvent<TiledMap>>,
     mut map_ready_events: EventWriter<MapReadyEvent>,
-    mut maps: ResMut<Assets<TiledMap>>,
+    maps: Res<Assets<TiledMap>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut query: Query<(
@@ -120,23 +115,21 @@ pub fn process_loaded_tile_maps(
     for event in map_events.iter() {
         match event {
             AssetEvent::Created { handle } => {
-                dbg!("Map added!");
+                log::info!("Map added!");
                 changed_maps.insert(handle.clone());
             }
             AssetEvent::Modified { handle } => {
-                dbg!("Map changed!");
+                log::info!("Map changed!");
                 changed_maps.insert(handle.clone());
             }
             AssetEvent::Removed { handle } => {
-                dbg!("Map removed!");
+                log::info!("Map removed!");
                 // if mesh was modified and removed in the same update, ignore the modification
                 // events are ordered so future modification events are ok
                 changed_maps.remove(handle);
             }
         }
     }
-
-
 
     for changed_map in changed_maps.iter() {
         let tiled_map_asset = maps.get(changed_map).unwrap();
@@ -153,6 +146,8 @@ pub fn process_loaded_tile_maps(
                 continue;
             }
 
+            let mut texture_handles = Vec::new();
+
             // Clear out child entities
             if let Some(children) = children {
                 for child in children.iter() {
@@ -168,6 +163,7 @@ pub fn process_loaded_tile_maps(
                         .join(tileset.images.first().unwrap().source.as_str());
                     log::info!("loading image: {:?}", texture_path);
                     let texture_handle = asset_server.load(texture_path);
+                    texture_handles.push(texture_handle.clone());
                     materials_map.insert(
                         tileset.first_gid,
                         materials.add(texture_handle.clone().into()),
@@ -177,13 +173,15 @@ pub fn process_loaded_tile_maps(
                 if let Some(material) = materials_map.get(&tileset.first_gid) {
                     // Once materials have been created/added we need to then create the layers.
                     for layer in tiled_map_asset.map.layers.iter() {
-                        TilesetLayer::new(entity, &mut commands, &mut meshes, material.clone(), &tiled_map_asset.map, layer, tileset);
+                        let layer_entity = TilesetLayer::new(entity, &mut commands, &mut meshes, material.clone(), &tiled_map_asset.map, layer, tileset);
+                        layers.map_layer_entities.push(layer_entity);
                     }
                 }
             }
             
             let evt = MapReadyEvent {
                 map_handle: map_handle.clone(),
+                textures: texture_handles,
             };
             map_ready_events.send(evt);
         }
@@ -194,4 +192,5 @@ pub fn process_loaded_tile_maps(
 
 pub struct MapReadyEvent {
     pub map_handle: Handle<TiledMap>,
+    pub textures: Vec<Handle<Texture>>,
 }

@@ -1,6 +1,7 @@
-use crate::{loader::TiledMapLoader};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
+
+use crate::prelude::{Animation, Frame};
 
 #[derive(Debug)]
 pub struct TilesetLayer;
@@ -16,9 +17,9 @@ impl TilesetLayer {
         tileset: &tiled::Tileset,
     ) -> Entity {
         let tile_width = tileset.tile_width as f32;
-        let mut tile_height = tileset.tile_height as f32;
+        let tile_height = tileset.tile_height as f32;
 
-        let tile_space = tileset.spacing as f32; // TODO: re-add tile spacing.. :p
+        let _tile_space = tileset.spacing as f32; // TODO: re-add tile spacing.. :p
 
         let mut map = Map::new(
             Vec2::new((tiled_map.width as f32 / 64.0).ceil(), (tiled_map.height as f32 / 64.0).ceil()).into(), 
@@ -62,17 +63,36 @@ impl TilesetLayer {
                     continue;
                 }
 
-                let tile = map_tile.gid - tileset.first_gid;
-                let mut tile_pos = MapVec2::new(x as i32, y as i32);
+                let tile_id = map_tile.gid - tileset.first_gid;
+                let mut tile_pos = MapVec2::new(
+                    x as i32, //(x as f32 / tile_size_x_diff) as i32,
+                    y as i32, //(y as f32 / tile_size_y_diff) as i32
+                );
                 if tiled_map.orientation == tiled::Orientation::Orthogonal {
                     tile_pos.y = tiled_map.height as i32 - tile_pos.y;
                 }
-                map.add_tile(commands, tile_pos, Tile {
-                    texture_index: tile,
+                let tile_entity = map.add_tile(commands, tile_pos, Tile {
+                    texture_index: tile_id,
                     flip_x: map_tile.flip_h || map_tile.flip_d,
                     flip_y: map_tile.flip_v || map_tile.flip_d,
                     ..Default::default()
                 }).unwrap();
+
+                if let Some(tile) = tileset.tiles.iter().find(|tile| tile.id == tile_id) {
+                    if let Some(animations) = tile.animation.clone() {
+                        let animation = Animation {
+                            frames: animations.iter().map(|frame| Frame {
+                                tile_id: frame.tile_id,
+                                duration: (frame.duration as f64) / 1000.0,
+                            }).collect(),
+                            current_frame: 0,
+                            last_update: 0.0,
+                        };
+
+                        commands.entity(tile_entity).insert(animation);
+                    }
+                }
+                
             }
         }
 
@@ -89,8 +109,4 @@ impl TilesetLayer {
 
         map_entity
     }
-}
-
-pub struct MapLayer {
-    pub tileset_layers: Vec<Map>,
 }

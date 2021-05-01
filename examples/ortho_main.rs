@@ -1,9 +1,11 @@
 use bevy::{app::CoreStage::PreUpdate, prelude::*, render::camera::Camera};
 use bevy_tiled_prototype::prelude::*;
 
+mod utils;
+
 fn main() {
     env_logger::Builder::from_default_env()
-    .filter_level(log::LevelFilter::Info)
+    .filter_level(log::LevelFilter::Error)
     .init();
 
     App::build()
@@ -13,7 +15,7 @@ fn main() {
         .add_startup_system(setup.system())
         .add_system(camera_movement.system())
         // Needs to run before rendering to set texture atlas filter for new tiles- would be better to use states
-        .add_system_to_stage(PreUpdate, set_texture_filters_to_nearest.system())
+        .add_system_to_stage(PreUpdate, utils::texture_sampler::set_texture_filters_to_nearest.system())
         .run();
 }
 
@@ -63,22 +65,5 @@ fn camera_movement(
         }
 
         transform.translation += time.delta_seconds() * direction * 1000.;
-    }
-}
-
-// demo of https://github.com/StarArawn/bevy_tiled/issues/47#issuecomment-817126515
-//  Would be cleaner to put this in a separate AppState, transitioning out after textures loaded
-fn set_texture_filters_to_nearest(
-    mut map_ready_events: EventReader<MapReadyEvent>,
-    mut textures: ResMut<Assets<Texture>>,
-    texture_atlases: Res<Assets<TextureAtlas>>,
-) {
-    // quick and dirty, run this for all textures every time a map is created/modified
-    if map_ready_events.iter().count() > 0 {
-        for (_, atlas) in texture_atlases.iter() {
-            if let Some(texture) = textures.get_mut(atlas.texture.clone()) {
-                texture.sampler.min_filter = bevy::render::texture::FilterMode::Nearest;
-            }
-        }
     }
 }

@@ -1,5 +1,7 @@
-use bevy::{prelude::*, render::camera::Camera};
+use bevy::{app::CoreStage::PreUpdate, prelude::*, render::{camera::Camera}};
 use bevy_tiled_prototype::prelude::*;
+
+mod utils;
 
 fn main() {
     App::build()
@@ -8,6 +10,8 @@ fn main() {
         .add_system(bevy::input::system::exit_on_esc_system.system())
         .add_startup_system(setup.system())
         .add_system(camera_movement.system())
+        // Needs to run before rendering to set texture atlas filter for new tiles- would be better to use states
+        .add_system_to_stage(PreUpdate, utils::texture_sampler::set_texture_filters_to_nearest.system())
         .run();
 }
 
@@ -57,3 +61,4 @@ fn camera_movement(
         transform.translation += time.delta_seconds() * direction * 1000.;
     }
 }
+
