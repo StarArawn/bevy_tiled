@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_tiled_prototype::{MapRoot, TiledMapCenter};
+use bevy_tiled_prototype::prelude::*;
 
 // this example demonstrates moving the map mesh entities using
 // the MapRoot marker on a passed-in parent element
@@ -10,6 +10,8 @@ const SCALE: f32 = 0.25;
 struct MovementData {
     transform: Transform,
 }
+
+struct MapRoot;
 
 fn main() {
     App::build()
@@ -34,14 +36,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..Default::default()
             },
         ))
+        .insert(MapRoot)
         .id();
 
-    commands.spawn_bundle(bevy_tiled_prototype::TiledMapBundle {
-        map_asset: asset_server.load("ortho-map.tmx"),
-        parent_option: Some(parent),
-        center: TiledMapCenter(true),
-        origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
+    commands.entity(parent).with_children(|child_builder| {
+        child_builder.spawn_bundle(TiledMapBundle {
+            map_asset: asset_server.load("ortho-map.tmx"),
         ..Default::default()
+        });
     });
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 }

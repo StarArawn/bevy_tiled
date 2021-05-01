@@ -1,7 +1,11 @@
 use bevy::{app::CoreStage::PreUpdate, prelude::*, render::camera::Camera};
-use bevy_tiled_prototype::{MapReadyEvent, TiledMapCenter};
+use bevy_tiled_prototype::prelude::*;
 
 fn main() {
+    env_logger::Builder::from_default_env()
+    .filter_level(log::LevelFilter::Info)
+    .init();
+
     App::build()
         .add_plugins(DefaultPlugins)
         .add_plugin(bevy_tiled_prototype::TiledMapPlugin)
@@ -14,10 +18,10 @@ fn main() {
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn_bundle(bevy_tiled_prototype::TiledMapBundle {
+    asset_server.watch_for_changes().unwrap();
+    
+    commands.spawn_bundle(TiledMapBundle {
         map_asset: asset_server.load("ortho-map.tmx"),
-        center: TiledMapCenter(true),
-        origin: Transform::from_scale(Vec3::new(4.0, 4.0, 1.0)),
         ..Default::default()
     });
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());

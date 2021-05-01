@@ -1,19 +1,11 @@
 use bevy::{asset::AssetServerSettings, prelude::*};
+use bevy_ecs_tilemap::prelude::*;
+use tiled_map::{MapReadyEvent, process_loaded_tile_maps};
 
-mod utils;
-pub use utils::*;
-
-mod loader;
-mod map;
-pub use map::*;
 mod layers;
-pub use layers::*;
-mod objects;
-pub use objects::*;
+mod loader;
+mod tiled_map;
 
-mod view;
-pub use view::*;
-/// Adds support for GLTF file loading to Apps
 #[derive(Default)]
 pub struct TiledMapPlugin;
 
@@ -26,13 +18,16 @@ impl Plugin for TiledMapPlugin {
             .asset_folder
             .clone();
 
-        app.add_asset::<map::Map>()
+        app
+            .add_plugin(TileMapPlugin)
+            .add_asset::<tiled_map::TiledMap>()
             .add_asset_loader(loader::TiledMapLoader::new(asset_folder))
-            .add_event::<ObjectReadyEvent>()
             .add_event::<MapReadyEvent>()
             .add_system(process_loaded_tile_maps.system());
-
-        let world = app.world_mut();
-        add_tile_map_graph(world);
     }
+}
+
+pub mod prelude {
+    pub use crate::TiledMapPlugin;
+    pub use crate::tiled_map::{TiledMapBundle, MapReadyEvent};
 }
