@@ -29,7 +29,7 @@ web = [
 [dependencies]
 anyhow = "1.0"
 bevy = { version = "0.5" }
-bevy_ecs_tilemap = { path="../bevy_ecs_tilemap" } #{ git="https://github.com/StarArawn/bevy_ecs_tilemap", branch="main" }
+bevy_ecs_tilemap = { git="https://github.com/StarArawn/bevy_ecs_tilemap", rev="50ec3c12c68079cf0d624e4dcade349351c3ae6c" }
 log = "0.4"
 tiled = { version = "0.9", default-features = false }
 

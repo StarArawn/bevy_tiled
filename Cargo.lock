@@ -378,6 +378,7 @@ dependencies = [
 [[package]]
 name = "bevy_ecs_tilemap"
 version = "0.2.0"
+source = "git+https://github.com/StarArawn/bevy_ecs_tilemap?rev=50ec3c12c68079cf0d624e4dcade349351c3ae6c#50ec3c12c68079cf0d624e4dcade349351c3ae6c"
 dependencies = [
  "bevy",
  "dyn-clone",
