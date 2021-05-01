@@ -8,6 +8,8 @@ https://www.mapeditor.org/
 
 Feel free to use this code as a reference for your own custom tile mapping solution as well.
 
+This plugin uses bevy_ecs_tilemap(https://github.com/StarArawn/bevy_ecs_tilemap) to render tiled data.
+
 ## Bevy Versions
 
 The `main` branch of this repository targets Bevy 0.5. When using bevy_tiled, please make sure your version of Bevy matches the version referenced by this library. There are versions for 0.4 and 0.3 as well.
@@ -37,12 +39,15 @@ In these examples, you should be able to use the wasd keys to pan across the map
 # Features
 ## Toplevel Entity Support
 
+TODO: REWRITE THIS SECTION
 For now, TiledMapBundle is just a configuration object. If you would like access to a toplevel entity that can be transformed, pass into the configuration:
 
     parent_option: Some(entity)
 
 Then, both chunks and objects will be inserted as children to this entity, which will be tagged with MapRoot. This API is likely to change, but we have an [example](/examples/parent_entity.rs) for how it currently works.
 ## Object Group Support
+
+TODO: REWRITE THIS SECTION
 
 Object Grous are now supported. They will be skipped if not visible. Individual objects that are invisible
 will be spawned with is_visible set to false. You may pass into the configuration object:
@@ -83,6 +88,8 @@ Then when you save your map, it should update in the application.
 
 ## WASM and bevy_webgl2
 
+## TODO see if web still works? :/
+
 Use `default-features=false, features=["web"]` in your project's `Cargo.toml`. Tiled maps using Zstd compression are not supported.
 
 ## Top-needed features
@@ -90,4 +97,4 @@ Use `default-features=false, features=["web"]` in your project's `Cargo.toml`. T
   * better support for isometric maps
   * support for embeded objects in tiles
   * support for embedded images in Tmx files
-  * support for animations
+  * ~~support for animations~~ done
