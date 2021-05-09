@@ -1,6 +1,6 @@
 use crate::{
     objects::ObjectGroup, utils::project_iso, utils::project_ortho, ChunkBundle, MapLayer,
-    TileMapChunk, TilesetLayer,
+    TilesetLayer,
 };
 use anyhow::Result;
 use bevy::{
@@ -362,7 +362,7 @@ pub fn process_loaded_tile_maps(
                         * Transform::from_translation(Vec3::new(
                             tileset_layer.offset_x,
                             -tileset_layer.offset_y,
-                            0.0,
+                            layer_id as f32,
                         ));
 
                     for (_, tileset_guid, mesh) in chunk_mesh_list.iter() {
@@ -372,10 +372,6 @@ pub fn process_loaded_tile_maps(
                         // Instead for now spawn a new entity per chunk.
                         let chunk_entity = commands
                             .spawn_bundle(ChunkBundle {
-                                chunk: TileMapChunk {
-                                    // TODO: Support more layers here..
-                                    layer_id: layer_id as f32,
-                                },
                                 material: material_handle.clone(),
                                 mesh: mesh.clone(),
                                 map_parent: map_handle.clone(),

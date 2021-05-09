@@ -9,6 +9,7 @@ pub struct TilesetLayer {
     pub offset_x: f32,
     pub offset_y: f32,
 }
+
 impl TilesetLayer {
     pub fn new(map: &tiled::Map, layer: &tiled::Layer, tileset: &tiled::Tileset) -> TilesetLayer {
         let target_chunk_x = 32;
@@ -39,7 +40,7 @@ impl TilesetLayer {
                             if lookup_x < map.width as usize && lookup_y < map.height as usize {
                                 let map_tile = match &layer.tiles {
                                     tiled::LayerData::Finite(tiles) => &tiles[lookup_y][lookup_x],
-                                    _ => panic!("Infinte maps not supported"),
+                                    _ => panic!("Infinite maps not supported"),
                                 };
                                 // tile not in this set
                                 if map_tile.gid < tileset.first_gid
