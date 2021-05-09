@@ -13,11 +13,7 @@ layout(std140) uniform Transform {  // set = 2, binding = 0
     mat4 Model;
 };
 
-layout(std140) uniform TileMapChunk {  // set = 2, binding = 1
-    float layer_id;
-};
-
 void main() {
     v_Uv = Vertex_Uv;
-    gl_Position = ViewProj * Model * vec4(Vertex_Position.xy, layer_id, 1.0);
+    gl_Position = ViewProj * Model * vec4(Vertex_Position.xy, 0.0, 1.0);
 }

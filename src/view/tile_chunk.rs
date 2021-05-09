@@ -1,3 +1,4 @@
+use bevy::prelude::*;
 use bevy::{
     math::{Vec2, Vec4},
     render::{
@@ -9,14 +10,14 @@ use bevy::{
 };
 use tiled::{LayerTile, Tileset};
 
-use crate::{loader::TiledMapLoader, Map, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
-use bevy::prelude::*;
+use crate::{loader::TiledMapLoader, Map, TILE_MAP_PIPELINE_HANDLE};
 
 #[derive(Debug)]
 pub struct LayerChunk {
     pub position: Vec2,
     pub tiles: Vec<Vec<TileChunk>>,
 }
+
 impl LayerChunk {
     pub fn build_uv_mesh(&self, tileset_guid: u32) -> Option<Mesh> {
         let mut positions: Vec<[f32; 3]> = Vec::new();
@@ -82,7 +83,6 @@ impl LayerChunk {
 #[derive(Bundle)]
 pub struct ChunkBundle {
     pub map_parent: Handle<Map>, // tmp:chunks should be child entities of a toplevel map entity.
-    pub chunk: TileMapChunk,
     pub main_pass: MainPass,
     pub material: Handle<ColorMaterial>,
     pub render_pipeline: RenderPipelines,
@@ -97,7 +97,6 @@ impl Default for ChunkBundle {
     fn default() -> Self {
         Self {
             map_parent: Handle::default(),
-            chunk: TileMapChunk::default(),
             visible: Visible {
                 is_transparent: true,
                 ..Default::default()

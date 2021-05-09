@@ -1,4 +1,3 @@
-use crate::TileMapChunk;
 use bevy::{
     prelude::*,
     reflect::TypeUuid,
@@ -7,7 +6,6 @@ use bevy::{
             BlendFactor, BlendOperation, BlendState, ColorTargetState, ColorWrite, CompareFunction,
             DepthBiasState, DepthStencilState, PipelineDescriptor, StencilFaceState, StencilState,
         },
-        render_graph::{base, RenderGraph, RenderResourcesNode},
         shader::{ShaderStage, ShaderStages},
         texture::TextureFormat,
     },
@@ -70,25 +68,13 @@ pub fn build_tile_map_pipeline(shaders: &mut Assets<Shader>) -> PipelineDescript
     }
 }
 
-pub mod node {
-    pub const TILE_MAP_CHUNK: &'static str = "tile_map_chunk";
-}
-
 pub(crate) fn add_tile_map_graph(world: &mut World) {
     world.resource_scope(|world, mut pipelines: Mut<Assets<PipelineDescriptor>>| {
-        world.resource_scope(|world, mut shaders: Mut<Assets<Shader>>| {
-            let mut graph = world.get_resource_mut::<RenderGraph>().unwrap();
+        world.resource_scope(|_, mut shaders: Mut<Assets<Shader>>| {
             pipelines.set_untracked(
                 TILE_MAP_PIPELINE_HANDLE,
                 build_tile_map_pipeline(&mut shaders),
             );
-            graph.add_system_node(
-                node::TILE_MAP_CHUNK,
-                RenderResourcesNode::<TileMapChunk>::new(true),
-            );
-            graph
-                .add_node_edge(node::TILE_MAP_CHUNK, base::node::MAIN_PASS)
-                .unwrap();
         });
     });
 }
