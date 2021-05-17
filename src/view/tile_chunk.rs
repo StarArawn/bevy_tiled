@@ -10,7 +10,7 @@ use bevy::{
 };
 use tiled::{LayerTile, Tileset};
 
-use crate::{loader::TiledMapLoader, Map, TILE_MAP_PIPELINE_HANDLE};
+use crate::{loader::TiledMapLoader, Map, TileMapChunk, TILE_MAP_PIPELINE_HANDLE};
 
 #[derive(Debug)]
 pub struct LayerChunk {
@@ -83,6 +83,7 @@ impl LayerChunk {
 #[derive(Bundle)]
 pub struct ChunkBundle {
     pub map_parent: Handle<Map>, // tmp:chunks should be child entities of a toplevel map entity.
+    pub chunk: TileMapChunk,
     pub main_pass: MainPass,
     pub material: Handle<ColorMaterial>,
     pub render_pipeline: RenderPipelines,
@@ -97,6 +98,7 @@ impl Default for ChunkBundle {
     fn default() -> Self {
         Self {
             map_parent: Handle::default(),
+            chunk: TileMapChunk,
             visible: Visible {
                 is_transparent: true,
                 ..Default::default()
