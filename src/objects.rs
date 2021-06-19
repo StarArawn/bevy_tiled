@@ -13,7 +13,7 @@ pub struct ObjectGroup {
 impl ObjectGroup {
     pub fn new_with_tile_ids(
         inner: &tiled::ObjectGroup,
-        tile_gids: &HashMap<u32, u32>,
+        tileset_by_gid: &HashMap<u32, tiled::Tileset>,
     ) -> ObjectGroup {
         // println!("grp {}", inner.name.to_string());
         ObjectGroup {
@@ -23,7 +23,7 @@ impl ObjectGroup {
             objects: inner
                 .objects
                 .iter()
-                .map(|obj| Object::new_with_tile_ids(obj, tile_gids))
+                .map(|obj| Object::new_with_tile_ids(obj, tileset_by_gid))
                 .collect(),
         }
     }
@@ -41,6 +41,7 @@ pub struct Object {
     pub gid: u32,                 // sprite ID from tiled::Object
     pub tileset_gid: Option<u32>, // AKA first_gid
     pub sprite_index: Option<u32>,
+    pub tile_scale: Option<Vec2>,
 }
 
 impl Object {
@@ -53,6 +54,7 @@ impl Object {
             visible: original_object.visible,
             tileset_gid: None,
             sprite_index: None,
+            tile_scale: None,
             position: Vec2::new(original_object.x, original_object.y),
             size: Vec2::new(original_object.width, original_object.height),
             name: original_object.name.clone(),
@@ -66,16 +68,26 @@ impl Object {
 
     pub fn new_with_tile_ids(
         original_object: &tiled::Object,
-        tile_gids: &HashMap<u32, u32>,
+        tileset_by_gid: &HashMap<u32, tiled::Tileset>,
     ) -> Object {
         // println!("obj {}", original_object.gid.to_string());
         let mut o = Object::new(original_object);
-        o.set_tile_ids(tile_gids);
+        o.set_tile_ids(tileset_by_gid);
         o
     }
-    pub fn set_tile_ids(&mut self, tile_gids: &HashMap<u32, u32>) {
-        self.tileset_gid = tile_gids.get(&self.gid).cloned();
+    pub fn set_tile_ids(&mut self, tileset_by_gid: &HashMap<u32, tiled::Tileset>) {
+        let tileset = tileset_by_gid.get(&self.gid);
+        self.tileset_gid = tileset.map(|ts| ts.first_gid.clone());
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid);
+
+        // compute scale from tileset size to new height/widtho
+        if let &(Some(ts), Some(dims)) = &(tileset, self.dimensions()) {
+            self.tile_scale = Some(Vec2::new(
+                dims.x / ts.tile_width as f32,
+                dims.y / ts.tile_height as f32,
+            ));
+        }
+
     }
 
     pub fn transform_from_map(
@@ -149,25 +161,34 @@ impl Object {
         tile_map_transform: &Transform,
         debug_config: &DebugConfig,
     ) -> EntityCommands<'a, 'b> {
+
+        // object dimensions
+        let dimensions = self
+            .dimensions()
+            .expect("Don't know how to handle object without dimensions");
+
         let mut new_entity_commands = if let Some(texture_atlas) = texture_atlas {
             let sprite_index = self.sprite_index.expect("missing sprite index");
             let tileset_gid = self.tileset_gid.expect("missing tileset");
 
             // fetch tile for this object if it exists
-            let object_tile_size = map
+            let object_tileset = map
                 .tilesets
                 .iter()
-                .find(|ts| ts.first_gid == tileset_gid)
+                .find(|ts| ts.first_gid == tileset_gid);
+            let object_tile_size = object_tileset
                 .map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
-            // object dimensions
-            let dims = self.dimensions();
+            let object_tile = object_tileset.and_then(|ts| ts
+                .tiles.iter().find(|&tile| tile.id + ts.first_gid == self.gid)
+            );
+
             // use object dimensions and tile size to determine extra scale to apply for tile objects
-            let tile_scale = if let (Some(dims), Some(size)) = (dims, object_tile_size) {
-                Some((dims / size).extend(1.0))
+            let tile_scale = if let Some(size) = object_tile_size {
+                Some((dimensions / size).extend(1.0))
             } else {
                 None
             };
-            commands.spawn_bundle(SpriteSheetBundle {
+            let mut entity_commands = commands.spawn_bundle(SpriteSheetBundle {
                 transform: self.transform_from_map(&map, tile_map_transform, tile_scale),
                 texture_atlas: texture_atlas.clone(),
                 sprite: TextureAtlasSprite {
@@ -180,12 +201,48 @@ impl Object {
                     ..Default::default()
                 },
                 ..Default::default()
-            })
+            });
+            // spawn embedded objects as children
+            let tile_size = object_tile_size.expect("child object needs parent to have a size");
+            object_tile.map(|tile| {
+                entity_commands.with_children(|builder| {
+                    //builder.spawn
+                    for obj_grp in &tile.objectgroup {
+                        for obj in &obj_grp.objects {
+                            let marker_object = Object::new(obj);
+
+                            let mut embedded_object_transform = Transform::from_scale(Vec3::splat(1.0));
+                            embedded_object_transform.translation = Vec3::new(
+                                obj.x -(tile_size.x - obj.width) / 2.0, //(self.size.y / tile_scale.unwrap_or(Vec3::ONE).y - obj.height) / 2.0 - obj.y,
+                                -obj.y + (tile_size.y - obj.height) / 2.0, //(self.size.y / tile_scale.unwrap_or(Vec3::ONE).y - obj.height) / 2.0 - obj.y,
+                                0.0001
+                            );
+                            //println!("{:?},{:?}", tile_scale.unwrap(), embedded_object_transform.translation );
+                            let size  = marker_object.dimensions().expect("embedded object needs dimension");
+
+                            builder.spawn_bundle(
+                                SpriteBundle {
+                                    material: debug_config
+                                        .material
+                                        .clone()
+                                        .unwrap_or_else(|| Handle::<ColorMaterial>::default()),
+                                    sprite: Sprite::new(size),
+                                    transform:  embedded_object_transform,
+                                    visible: Visible {
+                                        is_visible: debug_config.enabled,
+                                        is_transparent: true,
+                                        ..Default::default()
+                                    },
+                                    ..Default::default()
+                                }
+                            ).insert(marker_object);
+                        }
+                    }
+                });
+            });
+            entity_commands
         } else {
             // commands.spawn((self.map_transform(&map.map, &tile_map_transform, None), GlobalTransform::default()))
-            let dimensions = self
-                .dimensions()
-                .expect("Don't know how to handle object without dimensions");
             let transform = self.transform_from_map(&map, &tile_map_transform, None);
             commands
                 // Debug box.

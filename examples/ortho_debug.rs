@@ -3,7 +3,7 @@ use bevy_tiled_prototype::{DebugConfig, Object, TiledMapCenter};
 
 // this example demonstrates debugging objects. Hit spacebar to toggle them
 
-const SCALE: f32 = 2.0;
+const SCALE: f32 = 4.0;
 
 fn main() {
     App::build()
@@ -17,7 +17,7 @@ fn main() {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(bevy_tiled_prototype::TiledMapBundle {
-        map_asset: asset_server.load("ortho-map.tmx"),
+        map_asset: asset_server.load("ortho-debug.tmx"),
         center: TiledMapCenter(true),
         origin: Transform::from_scale(Vec3::new(SCALE, SCALE, 1.0)),
         debug_config: DebugConfig {
