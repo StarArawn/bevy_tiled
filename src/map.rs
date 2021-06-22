@@ -26,7 +26,7 @@ pub struct Map {
     pub map: tiled::Map,
     pub meshes: Vec<(u32, u32, Mesh)>,
     pub layers: Vec<MapLayer>,
-    pub groups: Vec<ObjectGroup>,
+    pub object_groups: Vec<ObjectGroup>,
     pub tile_size: Vec2,
     pub image_folder: std::path::PathBuf,
     pub asset_dependencies: Vec<PathBuf>,
@@ -65,7 +65,7 @@ impl Map {
         )?;
 
         let mut layers = Vec::new();
-        let mut groups = Vec::new();
+        let mut object_groups = Vec::new();
 
         // this only works if gids are uniques across all maps used - todo move into ObjectGroup?
         let mut tile_gids: HashMap<u32, u32> = Default::default();
@@ -86,12 +86,26 @@ impl Map {
                     object_gids.insert(*first_gid);
                 });
             });
-            groups.push(tiled_o_g);
+            object_groups.push(tiled_o_g);
         }
 
         let tile_size = Vec2::new(map.tile_width as f32, map.tile_height as f32);
         let image_folder: PathBuf = asset_path.parent().unwrap().into();
         let mut asset_dependencies = Vec::new();
+
+        for tileset in map.tilesets.iter() {
+            for image in tileset.images.iter() {
+                let tile_path = image_folder.join(image.source.as_str());
+                asset_dependencies.push(tile_path);
+            }
+
+            for tile in tileset.tiles.iter() {
+                if let Some(tile_image) = tile.images.first() {
+                    let tile_path = image_folder.join(tile_image.source.as_str());
+                    asset_dependencies.push(tile_path);
+                }
+            }
+        }
 
         for layer in map.layers.iter() {
             if !layer.visible {
@@ -100,9 +114,6 @@ impl Map {
             let mut tileset_layers = Vec::new();
 
             for tileset in map.tilesets.iter() {
-                let tile_path = image_folder.join(tileset.images.first().unwrap().source.as_str());
-                asset_dependencies.push(tile_path);
-
                 tileset_layers.push(TilesetLayer::new(&map, &layer, &tileset));
             }
 
@@ -128,7 +139,7 @@ impl Map {
             map,
             meshes,
             layers,
-            groups,
+            object_groups,
             tile_size,
             image_folder,
             asset_dependencies,
@@ -241,58 +252,91 @@ pub fn process_loaded_tile_maps(
             query.iter_mut()
         {
             // only deal with currently changed map
-            if map_handle != changed_map {
-                continue;
-            }
+            if map_handle != changed_map { continue; }
+
+            let object_gids: Vec<_> = map
+                .object_groups
+                .iter()
+                .flat_map(|og| og.objects.iter().map(|o| o.tileset_gid))
+                .collect();
 
             for tileset in &map.map.tilesets {
-                if !materials_map.contains_key(&tileset.first_gid) {
+                // only generate texture_atlas for tilesets used in objects
+                //if !object_gids.contains(&Some(tileset.first_gid)) { continue; }
+
+                if materials_map.contains_key(&tileset.first_gid) { continue; }
+
+                if let Some(image) = tileset.images.first() { // Single-image tileset
                     let texture_path = map
                         .image_folder
-                        .join(tileset.images.first().unwrap().source.as_str());
+                        .join(image.source.as_str());
                     let texture_handle = asset_server.load(texture_path);
                     materials_map.insert(
                         tileset.first_gid,
                         materials.add(texture_handle.clone().into()),
                     );
 
-                    // only generate texture_atlas for tilesets used in objects
-                    let object_gids: Vec<_> = map
-                        .groups
-                        .iter()
-                        .flat_map(|og| og.objects.iter().map(|o| o.tileset_gid))
-                        .collect();
-                    if object_gids.contains(&Some(tileset.first_gid)) {
-                        // For simplicity use textureAtlasSprite for object layers
-                        // these insertions should be limited to sprites referenced by objects
-                        let tile_width = tileset.tile_width as f32;
-                        let tile_height = tileset.tile_height as f32;
-                        let image = tileset.images.first().unwrap();
-                        let texture_width = image.width as f32;
-                        let texture_height = image.height as f32;
-                        let columns = (texture_width / tile_width).floor() as usize;
-                        let rows = (texture_height / tile_height).floor() as usize;
+                    // For simplicity use textureAtlasSprite for object layers
+                    // these insertions should be limited to sprites referenced by objects
+                    let tile_width = tileset.tile_width as f32;
+                    let tile_height = tileset.tile_height as f32;
+                    let texture_width = image.width as f32;
+                    let texture_height = image.height as f32;
+                    let columns = (texture_width / tile_width).floor() as usize;
+                    let rows = (texture_height / tile_height).floor() as usize;
 
-                        let has_new = (0..(columns * rows) as u32).fold(false, |total, next| {
-                            total || !texture_atlas_map.contains_key(&(tileset.first_gid + next))
-                        });
-                        if has_new {
-                            let atlas = TextureAtlas::from_grid(
-                                texture_handle.clone(),
-                                Vec2::new(tile_width, tile_height),
-                                columns,
-                                rows,
-                            );
-                            let atlas_handle = texture_atlases.add(atlas);
-                            for i in 0..(columns * rows) as u32 {
-                                if texture_atlas_map.contains_key(&(tileset.first_gid + i)) {
-                                    continue;
-                                }
-                                // println!("insert: {}", tileset.first_gid + i);
-                                texture_atlas_map
-                                    .insert(tileset.first_gid + i, atlas_handle.clone());
-                            }
+                    let has_new = (0..(columns * rows) as u32).fold(false, |total, next| {
+                        total || !texture_atlas_map.contains_key(&(tileset.first_gid + next))
+                    });
+                    if !has_new { continue; }
+
+                    let atlas = TextureAtlas::from_grid(
+                        texture_handle.clone(),
+                        Vec2::new(tile_width, tile_height),
+                        columns,
+                        rows,
+                    );
+                    let atlas_handle = texture_atlases.add(atlas);
+                    for i in 0..(columns * rows) as u32 {
+                        if texture_atlas_map.contains_key(&(tileset.first_gid + i)) {
+                            continue;
                         }
+                        // println!("insert: {}", tileset.first_gid + i);
+                        texture_atlas_map
+                            .insert(tileset.first_gid + i, atlas_handle.clone());
+                    }
+                } else if let Some(_) = tileset.tiles.first().and_then(|tile| tile.images.first()) { // Image collection tileset
+                    for tile in tileset.tiles.iter() {
+                        let tile_image = tile.images.first()
+                            .unwrap_or_else(|| panic!("missing image for tile {} in image collection tileset {}", tile.id, tileset.name));
+                        let tile_gid = tileset.first_gid + tile.id - 1;
+                        if texture_atlas_map.contains_key(&tile_gid) {
+                            continue;
+                        }
+
+                        let texture_path = map
+                            .image_folder
+                            .join(tile_image.source.as_str());
+                        let texture_handle = asset_server.load(texture_path);
+                        materials_map.insert(
+                            tile_gid,
+                            materials.add(texture_handle.clone().into())
+                        );
+
+                        let atlas = TextureAtlas::from_grid(
+                            texture_handle.clone(),
+                            Vec2::new(tile_image.width as f32, tile_image.height as f32),
+                            1,
+                            1
+                        );
+                        let atlas_handle = texture_atlases.add(atlas);
+                        // println!("insert: {}", tile_gid);
+                        texture_atlas_map.insert(tile_gid, atlas_handle.clone());
+                        // if tile_image.source.contains("ground_stone") {
+                        //     dbg!(&tile_image);
+                        //     dbg!(tile_gid);
+                        //     dbg!(atlas_handle);
+                        // }
                     }
                 }
             }
@@ -323,7 +367,7 @@ pub fn process_loaded_tile_maps(
         mut created_entities,
     ) in query.iter_mut()
     {
-        if new_meshes.contains_key(map_handle) {
+        if changed_maps.contains(map_handle) {
             let map = maps.get(map_handle).unwrap();
 
             let tile_map_transform = if center.0 {
@@ -332,68 +376,68 @@ pub fn process_loaded_tile_maps(
                 origin.clone()
             };
 
-            let mesh_list = new_meshes.get_mut(map_handle).unwrap();
-
-            for (layer_id, layer) in map.layers.iter().enumerate() {
-                for tileset_layer in layer.tileset_layers.iter() {
-                    let material_handle = materials_map.get(&tileset_layer.tileset_guid).unwrap();
-                    // let mut mesh_list = mesh_list.iter_mut().filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32).drain(0..mesh_list.len()).collect::<Vec<_>>();
-                    let chunk_mesh_list = mesh_list
-                        .iter()
-                        .filter(|(mesh_layer_id, tileset_guid, _)| {
-                            *mesh_layer_id == layer_id as u32
-                                && *tileset_guid == tileset_layer.tileset_guid
-                        })
-                        .collect::<Vec<_>>();
-
-                    // removing entities consumes the record of created entities
-                    created_entities
-                        .created_layer_entities
-                        .remove(&(layer_id, tileset_layer.tileset_guid))
-                        .map(|entities| {
-                            // println!("Despawning previously-created mesh for this chunk");
-                            for entity in entities.iter() {
-                                // println!("calling despawn on {:?}", entity);
-                                commands.entity(*entity).despawn();
-                            }
-                        });
-                    let mut chunk_entities: Vec<Entity> = Default::default();
-                    let layer_transform = tile_map_transform
-                        * Transform::from_translation(Vec3::new(
-                            tileset_layer.offset_x,
-                            -tileset_layer.offset_y,
-                            layer_id as f32,
-                        ));
-
-                    for (_, tileset_guid, mesh) in chunk_mesh_list.iter() {
-                        // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
-                        // Change this once it does.
-
-                        // Instead for now spawn a new entity per chunk.
-                        let chunk_entity = commands
-                            .spawn_bundle(ChunkBundle {
-                                material: material_handle.clone(),
-                                mesh: mesh.clone(),
-                                map_parent: map_handle.clone(),
-                                transform: layer_transform,
-                                ..Default::default()
+            if let Some(mesh_list) = new_meshes.get_mut(map_handle) {
+                for (layer_id, layer) in map.layers.iter().enumerate() {
+                    for tileset_layer in layer.tileset_layers.iter() {
+                        let material_handle = materials_map.get(&tileset_layer.tileset_guid).unwrap();
+                        // let mut mesh_list = mesh_list.iter_mut().filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32).drain(0..mesh_list.len()).collect::<Vec<_>>();
+                        let chunk_mesh_list = mesh_list
+                            .iter()
+                            .filter(|(mesh_layer_id, tileset_guid, _)| {
+                                *mesh_layer_id == layer_id as u32
+                                    && *tileset_guid == tileset_layer.tileset_guid
                             })
-                            .id();
+                            .collect::<Vec<_>>();
 
-                        // println!("added created_entry after spawn");
+                        // removing entities consumes the record of created entities
                         created_entities
                             .created_layer_entities
-                            .entry((layer_id, *tileset_guid))
-                            .or_insert_with(|| Vec::new())
-                            .push(chunk_entity);
-                        chunk_entities.push(chunk_entity);
-                    }
-                    // if parent was passed in add children and mark it as MapRoot (temp until map bundle returns real entity)
-                    if let Some(parent_entity) = optional_parent {
-                        commands
-                            .entity(parent_entity.clone())
-                            .push_children(&chunk_entities)
-                            .insert(MapRoot);
+                            .remove(&(layer_id, tileset_layer.tileset_guid))
+                            .map(|entities| {
+                                // println!("Despawning previously-created mesh for this chunk");
+                                for entity in entities.iter() {
+                                    // println!("calling despawn on {:?}", entity);
+                                    commands.entity(*entity).despawn();
+                                }
+                            });
+                        let mut chunk_entities: Vec<Entity> = Default::default();
+                        let layer_transform = tile_map_transform
+                            * Transform::from_translation(Vec3::new(
+                                tileset_layer.offset_x,
+                                -tileset_layer.offset_y,
+                                layer_id as f32,
+                            ));
+
+                        for (_, tileset_guid, mesh) in chunk_mesh_list.iter() {
+                            // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
+                            // Change this once it does.
+
+                            // Instead for now spawn a new entity per chunk.
+                            let chunk_entity = commands
+                                .spawn_bundle(ChunkBundle {
+                                    material: material_handle.clone(),
+                                    mesh: mesh.clone(),
+                                    map_parent: map_handle.clone(),
+                                    transform: layer_transform,
+                                    ..Default::default()
+                                })
+                                .id();
+
+                            // println!("added created_entry after spawn");
+                            created_entities
+                                .created_layer_entities
+                                .entry((layer_id, *tileset_guid))
+                                .or_insert_with(|| Vec::new())
+                                .push(chunk_entity);
+                            chunk_entities.push(chunk_entity);
+                        }
+                        // if parent was passed in add children and mark it as MapRoot (temp until map bundle returns real entity)
+                        if let Some(parent_entity) = optional_parent {
+                            commands
+                                .entity(parent_entity.clone())
+                                .push_children(&chunk_entities)
+                                .insert(MapRoot);
+                        }
                     }
                 }
             }
@@ -402,7 +446,8 @@ pub fn process_loaded_tile_maps(
                 debug_config.material =
                     Some(materials.add(ColorMaterial::from(Color::rgba(0.4, 0.4, 0.9, 0.5))));
             }
-            for object_group in map.groups.iter() {
+
+            for object_group in map.object_groups.iter() {
                 for object in object_group.objects.iter() {
                     created_entities
                         .created_object_entities
@@ -426,12 +471,21 @@ pub fn process_loaded_tile_maps(
                     // println!("in object_group {}, object {:?}, grp: {}", object_group.name, &object.tileset_gid, object.gid);
                     let atlas_handle = object
                         .tileset_gid
-                        .and_then(|tileset_gid| texture_atlas_map.get(&tileset_gid));
+                        .and_then(|tileset_gid| texture_atlas_map.get(&(tileset_gid + object.sprite_index.unwrap() - 1))); 
+                    // if object.name == "Platform 1" {
+                    //     dbg!(object);
+                    //     dbg!(&atlas_handle);
+                    // }
+
+                    let atlas_sprite_index = &map.map.tilesets.iter()
+                        .find(|tileset| Some(tileset.first_gid) == object.tileset_gid)
+                        .and_then(|tileset| if tileset.images.len() > 0 { object.sprite_index } else { Some(0) } );
 
                     let entity = object
                         .spawn(
                             &mut commands,
                             atlas_handle,
+                            *atlas_sprite_index,
                             &map.map,
                             map_handle.clone(),
                             &tile_map_transform,

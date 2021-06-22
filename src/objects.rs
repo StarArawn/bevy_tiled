@@ -71,8 +71,10 @@ impl Object {
         // println!("obj {}", original_object.gid.to_string());
         let mut o = Object::new(original_object);
         o.set_tile_ids(tile_gids);
+        // dbg!(&o);
         o
     }
+
     pub fn set_tile_ids(&mut self, tile_gids: &HashMap<u32, u32>) {
         self.tileset_gid = tile_gids.get(&self.gid).cloned();
         self.sprite_index = self.tileset_gid.map(|first_gid| &self.gid - first_gid);
@@ -144,20 +146,22 @@ impl Object {
         &self,
         commands: &'b mut Commands<'a>,
         texture_atlas: Option<&Handle<TextureAtlas>>,
+        atlas_sprite_index: Option<u32>,
         map: &tiled::Map,
         map_handle: Handle<Map>,
         tile_map_transform: &Transform,
         debug_config: &DebugConfig,
     ) -> EntityCommands<'a, 'b> {
         let mut new_entity_commands = if let Some(texture_atlas) = texture_atlas {
-            let sprite_index = self.sprite_index.expect("missing sprite index");
+            let atlas_sprite_index = atlas_sprite_index.expect("missing atlas sprite index");
             let tileset_gid = self.tileset_gid.expect("missing tileset");
 
             // fetch tile for this object if it exists
-            let object_tile_size = map
+            let tileset = map
                 .tilesets
                 .iter()
-                .find(|ts| ts.first_gid == tileset_gid)
+                .find(|ts| ts.first_gid == tileset_gid);
+            let object_tile_size = tileset
                 .map(|ts| Vec2::new(ts.tile_width as f32, ts.tile_height as f32));
             // object dimensions
             let dims = self.dimensions();
@@ -171,7 +175,7 @@ impl Object {
                 transform: self.transform_from_map(&map, tile_map_transform, tile_scale),
                 texture_atlas: texture_atlas.clone(),
                 sprite: TextureAtlasSprite {
-                    index: sprite_index,
+                    index: atlas_sprite_index,
                     ..Default::default()
                 },
                 visible: Visible {

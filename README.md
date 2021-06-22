@@ -44,7 +44,7 @@ For now, TiledMapBundle is just a configuration object. If you would like access
 Then, both chunks and objects will be inserted as children to this entity, which will be tagged with MapRoot. This API is likely to change, but we have an [example](/examples/parent_entity.rs) for how it currently works.
 ## Object Group Support
 
-Object Grous are now supported. They will be skipped if not visible. Individual objects that are invisible
+Object Groups are now supported. They will be skipped if not visible. Individual objects that are invisible
 will be spawned with is_visible set to false. You may pass into the configuration object:
 
     debug_config: DebugConfig { enabled: true, material: None }
