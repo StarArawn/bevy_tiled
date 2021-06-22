@@ -261,8 +261,6 @@ pub fn process_loaded_tile_maps(
                 .collect();
 
             for tileset in &map.map.tilesets {
-                // only generate texture_atlas for tilesets used in objects
-                if !object_gids.contains(&Some(tileset.first_gid)) { continue; }
 
                 if materials_map.contains_key(&tileset.first_gid) { continue; }
 
@@ -275,6 +273,9 @@ pub fn process_loaded_tile_maps(
                         tileset.first_gid,
                         materials.add(texture_handle.clone().into()),
                     );
+
+                    // only generate texture_atlas for tilesets used in objects
+                    if !object_gids.contains(&Some(tileset.first_gid)) { continue; }
 
                     // For simplicity use textureAtlasSprite for object layers
                     // these insertions should be limited to sprites referenced by objects
@@ -332,11 +333,6 @@ pub fn process_loaded_tile_maps(
                         let atlas_handle = texture_atlases.add(atlas);
                         // println!("insert: {}", tile_gid);
                         texture_atlas_map.insert(tile_gid, atlas_handle.clone());
-                        // if tile_image.source.contains("ground_stone") {
-                        //     dbg!(&tile_image);
-                        //     dbg!(tile_gid);
-                        //     dbg!(atlas_handle);
-                        // }
                     }
                 }
             }
@@ -473,10 +469,6 @@ pub fn process_loaded_tile_maps(
                     let atlas_handle = object
                         .tileset_gid
                         .and_then(|tileset_gid| texture_atlas_map.get(&(tileset_gid + object.sprite_index.unwrap() - 1))); 
-                    // if object.name == "Platform 1" {
-                    //     dbg!(object);
-                    //     dbg!(&atlas_handle);
-                    // }
 
                     let atlas_sprite_index = &map.map.tilesets.iter()
                         .find(|tileset| Some(tileset.first_gid) == object.tileset_gid)

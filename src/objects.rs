@@ -166,8 +166,12 @@ impl Object {
             // object dimensions
             let dims = self.dimensions();
             // use object dimensions and tile size to determine extra scale to apply for tile objects
-            let tile_scale = if let (Some(dims), Some(size)) = (dims, object_tile_size) {
-                Some((dims / size).extend(1.0))
+            let tile_scale = if tileset.map(|tileset| tileset.images.len() > 0) == Some(true) {
+                if let (Some(dims), Some(size)) = (dims, object_tile_size) {
+                    Some((dims / size).extend(1.0))
+                } else {
+                    None
+                }
             } else {
                 None
             };
