@@ -262,7 +262,7 @@ pub fn process_loaded_tile_maps(
 
             for tileset in &map.map.tilesets {
                 // only generate texture_atlas for tilesets used in objects
-                //if !object_gids.contains(&Some(tileset.first_gid)) { continue; }
+                if !object_gids.contains(&Some(tileset.first_gid)) { continue; }
 
                 if materials_map.contains_key(&tileset.first_gid) { continue; }
 
@@ -379,64 +379,65 @@ pub fn process_loaded_tile_maps(
             if let Some(mesh_list) = new_meshes.get_mut(map_handle) {
                 for (layer_id, layer) in map.layers.iter().enumerate() {
                     for tileset_layer in layer.tileset_layers.iter() {
-                        let material_handle = materials_map.get(&tileset_layer.tileset_guid).unwrap();
-                        // let mut mesh_list = mesh_list.iter_mut().filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32).drain(0..mesh_list.len()).collect::<Vec<_>>();
-                        let chunk_mesh_list = mesh_list
-                            .iter()
-                            .filter(|(mesh_layer_id, tileset_guid, _)| {
-                                *mesh_layer_id == layer_id as u32
-                                    && *tileset_guid == tileset_layer.tileset_guid
-                            })
-                            .collect::<Vec<_>>();
-
-                        // removing entities consumes the record of created entities
-                        created_entities
-                            .created_layer_entities
-                            .remove(&(layer_id, tileset_layer.tileset_guid))
-                            .map(|entities| {
-                                // println!("Despawning previously-created mesh for this chunk");
-                                for entity in entities.iter() {
-                                    // println!("calling despawn on {:?}", entity);
-                                    commands.entity(*entity).despawn();
-                                }
-                            });
-                        let mut chunk_entities: Vec<Entity> = Default::default();
-                        let layer_transform = tile_map_transform
-                            * Transform::from_translation(Vec3::new(
-                                tileset_layer.offset_x,
-                                -tileset_layer.offset_y,
-                                layer_id as f32,
-                            ));
-
-                        for (_, tileset_guid, mesh) in chunk_mesh_list.iter() {
-                            // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
-                            // Change this once it does.
-
-                            // Instead for now spawn a new entity per chunk.
-                            let chunk_entity = commands
-                                .spawn_bundle(ChunkBundle {
-                                    material: material_handle.clone(),
-                                    mesh: mesh.clone(),
-                                    map_parent: map_handle.clone(),
-                                    transform: layer_transform,
-                                    ..Default::default()
+                        if let Some(material_handle) = materials_map.get(&tileset_layer.tileset_guid) {
+                            // let mut mesh_list = mesh_list.iter_mut().filter(|(mesh_layer_id, _)| *mesh_layer_id == layer_id as u32).drain(0..mesh_list.len()).collect::<Vec<_>>();
+                            let chunk_mesh_list = mesh_list
+                                .iter()
+                                .filter(|(mesh_layer_id, tileset_guid, _)| {
+                                    *mesh_layer_id == layer_id as u32
+                                        && *tileset_guid == tileset_layer.tileset_guid
                                 })
-                                .id();
+                                .collect::<Vec<_>>();
 
-                            // println!("added created_entry after spawn");
+                            // removing entities consumes the record of created entities
                             created_entities
                                 .created_layer_entities
-                                .entry((layer_id, *tileset_guid))
-                                .or_insert_with(|| Vec::new())
-                                .push(chunk_entity);
-                            chunk_entities.push(chunk_entity);
-                        }
-                        // if parent was passed in add children and mark it as MapRoot (temp until map bundle returns real entity)
-                        if let Some(parent_entity) = optional_parent {
-                            commands
-                                .entity(parent_entity.clone())
-                                .push_children(&chunk_entities)
-                                .insert(MapRoot);
+                                .remove(&(layer_id, tileset_layer.tileset_guid))
+                                .map(|entities| {
+                                    // println!("Despawning previously-created mesh for this chunk");
+                                    for entity in entities.iter() {
+                                        // println!("calling despawn on {:?}", entity);
+                                        commands.entity(*entity).despawn();
+                                    }
+                                });
+                            let mut chunk_entities: Vec<Entity> = Default::default();
+                            let layer_transform = tile_map_transform
+                                * Transform::from_translation(Vec3::new(
+                                    tileset_layer.offset_x,
+                                    -tileset_layer.offset_y,
+                                    layer_id as f32,
+                                ));
+
+                            for (_, tileset_guid, mesh) in chunk_mesh_list.iter() {
+                                // TODO: Sadly bevy doesn't support multiple meshes on a single entity with multiple materials.
+                                // Change this once it does.
+
+                                // Instead for now spawn a new entity per chunk.
+                                let chunk_entity = commands
+                                    .spawn_bundle(ChunkBundle {
+                                        material: material_handle.clone(),
+                                        mesh: mesh.clone(),
+                                        map_parent: map_handle.clone(),
+                                        transform: layer_transform,
+                                        ..Default::default()
+                                    })
+                                    .id();
+
+                                // println!("added created_entry after spawn");
+                                created_entities
+                                    .created_layer_entities
+                                    .entry((layer_id, *tileset_guid))
+                                    .or_insert_with(|| Vec::new())
+                                    .push(chunk_entity);
+                                chunk_entities.push(chunk_entity);
+                            }
+                            // if parent was passed in add children and mark it as MapRoot (temp until map bundle returns real entity)
+                            if let Some(parent_entity) = optional_parent {
+                                commands
+                                    .entity(parent_entity.clone())
+                                    .push_children(&chunk_entities)
+                                    .insert(MapRoot);
+                            }
                         }
                     }
                 }
