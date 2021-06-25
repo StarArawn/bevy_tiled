@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.7.0" orientation="orthogonal" renderorder="right-down" width="100" height="100" tilewidth="32" tileheight="32" infinite="0" nextlayerid="8" nextobjectid="12">
+ <tileset firstgid="1" name="Kenney Jumper" tilewidth="2048" tileheight="2048" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="2048" height="2048" source="jumper/bg_layer1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="2048" height="2048" source="jumper/bg_layer2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="2048" height="2048" source="jumper/bg_layer3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="2048" height="2048" source="jumper/bg_layer4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="380" height="94" source="jumper/ground_stone_broken.png"/>
+  </tile>
+  <tile id="5">
+   <image width="200" height="100" source="jumper/ground_stone_small_broken.png"/>
+  </tile>
+  <tile id="6">
+   <image width="200" height="100" source="jumper/ground_stone_small.png"/>
+  </tile>
+  <tile id="7">
+   <image width="380" height="94" source="jumper/ground_stone.png"/>
+  </tile>
+  <tile id="8">
+   <image width="81" height="85" source="jumper/mushroom_brown.png"/>
+  </tile>
+  <tile id="9">
+   <image width="81" height="99" source="jumper/mushroom_red.png"/>
+  </tile>
+ </tileset>
+ <objectgroup id="3" name="BG Layer 1" visible="0" locked="1">
+  <object id="3" gid="1" x="682" y="2288" width="2048" height="2048"/>
+ </objectgroup>
+ <objectgroup id="2" name="BG Layer 2" visible="0" locked="1">
+  <object id="2" gid="2" x="682" y="2288" width="2048" height="2048"/>
+ </objectgroup>
+ <objectgroup id="4" name="BG Layer 3" visible="0" locked="1">
+  <object id="4" gid="3" x="682" y="2288" width="2048" height="2048"/>
+ </objectgroup>
+ <objectgroup id="5" name="BG Layer 4" locked="1">
+  <object id="5" gid="4" x="682" y="2288" width="2048" height="2048"/>
+ </objectgroup>
+ <objectgroup id="6" name="Objects">
+  <object id="6" gid="5" x="1121.76" y="2045.18" width="380" height="94"/>
+  <object id="7" gid="5" x="1398.61" y="1741.55" width="380" height="94"/>
+  <object id="8" gid="7" x="1952.24" y="1835.82" width="200" height="100"/>
+  <object id="9" gid="7" x="2175.39" y="1502.73" width="200" height="100"/>
+  <object id="10" gid="9" x="2270" y="1402.5" width="81" height="85"/>
+  <object id="11" gid="10" x="2200.5" y="1402" width="81" height="99"/>
+ </objectgroup>
+</map>

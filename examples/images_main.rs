@@ -13,9 +13,9 @@ fn main() {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(bevy_tiled_prototype::TiledMapBundle {
-        map_asset: asset_server.load("objects-map.tmx"),
+        map_asset: asset_server.load("images-map.tmx"),
         center: TiledMapCenter(true),
-        origin: Transform::from_scale(Vec3::new(0.5, 0.5, 1.0)),
+        origin: Transform::from_scale(Vec3::new(0.75, 0.75, 1.0)),
         ..Default::default()
     });
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
