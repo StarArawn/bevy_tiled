@@ -264,7 +264,8 @@ pub fn process_loaded_tile_maps(
 
                 if materials_map.contains_key(&tileset.first_gid) { continue; }
 
-                if let Some(image) = tileset.images.first() { // Single-image tileset
+                if let Some(image) = tileset.images.first() {
+                    // Single-image tileset
                     let texture_path = map
                         .image_folder
                         .join(image.source.as_str());
@@ -306,7 +307,8 @@ pub fn process_loaded_tile_maps(
                         texture_atlas_map
                             .insert(tileset.first_gid + i, atlas_handle.clone());
                     }
-                } else if let Some(_) = tileset.tiles.first().and_then(|tile| tile.images.first()) { // Image collection tileset
+                } else if let Some(_) = tileset.tiles.first().and_then(|tile| tile.images.first()) {
+                    // Image collection tileset
                     for tile in tileset.tiles.iter() {
                         let tile_image = tile.images.first()
                             .unwrap_or_else(|| panic!("missing image for tile {} in image collection tileset {}", tile.id, tileset.name));
@@ -324,6 +326,7 @@ pub fn process_loaded_tile_maps(
                             materials.add(texture_handle.clone().into())
                         );
 
+                        // Create an atlas with only this single image
                         let atlas = TextureAtlas::from_grid(
                             texture_handle.clone(),
                             Vec2::new(tile_image.width as f32, tile_image.height as f32),
@@ -331,7 +334,6 @@ pub fn process_loaded_tile_maps(
                             1
                         );
                         let atlas_handle = texture_atlases.add(atlas);
-                        // println!("insert: {}", tile_gid);
                         texture_atlas_map.insert(tile_gid, atlas_handle.clone());
                     }
                 }

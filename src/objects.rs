@@ -71,7 +71,6 @@ impl Object {
         // println!("obj {}", original_object.gid.to_string());
         let mut o = Object::new(original_object);
         o.set_tile_ids(tile_gids);
-        // dbg!(&o);
         o
     }
 
