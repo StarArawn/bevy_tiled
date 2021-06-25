@@ -33,6 +33,15 @@ cargo run --example iso_main
 ```
 
 In these examples, you should be able to use the wasd keys to pan across the maps. You can follow a similar pattern in your own Bevy project. For more information, follow the [Bevy Setup] guide.
+### Example Assets
+
+Assets for the examples are from the following sources:
+
+[Outdoor Tiles Again](https://opengameart.org/content/outdoor-tiles-again) - Michele "Buch" Bucelli
+[Isometric 64x64 Outside Tileset](https://opengameart.org/content/isometric-64x64-outside-tileset) - Yar
+[Jumper Pack](https://kenney.nl/assets/jumper-pack) - Kenney
+
+These are all licensed under variants of the Creative Commons license. Please see each individual site about how to properly credit the creator if you decide to use these assets in your own project.
 
 # Features
 ## Toplevel Entity Support
