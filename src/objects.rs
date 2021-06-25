@@ -105,11 +105,18 @@ impl Object {
             tiled::ObjectShape::Rect { width, height } => {
                 match map_orientation {
                     tiled::Orientation::Orthogonal => {
-                        // tile object x/y represents bottom left corner
-                        let mut center_offset = Vec2::new(self.position.x + width/2.0, -self.position.y + height/2.0);
-                        if let Some(tile_scale) = tile_scale {
-                            // tile object scale based on map scale and passed-in scale from image dimensions
-                            transform.scale = tile_scale * transform.scale;
+                        let mut center_offset = Vec2::new(self.position.x, -self.position.y);
+                        match tile_scale {
+                            None => {
+                                // shape object x/y represent top left corner
+                                center_offset += Vec2::new(width, -height) / 2.0;
+                            }
+                            Some(tile_scale) => {
+                                // tile object x/y represents bottom left corner
+                                center_offset += Vec2::new(width, height) / 2.0;
+                                // tile object scale based on map scale and passed-in scale from image dimensions
+                                transform.scale = tile_scale * transform.scale;
+                            }
                         }
                         // apply map scale to object position, if this is a tile
                         center_offset *= map_transform.scale.truncate();
@@ -166,7 +173,7 @@ impl Object {
                     None
                 }
             } else {
-                None
+                Some(Vec3::ONE)
             };
             commands.spawn_bundle(SpriteSheetBundle {
                 transform: self.transform_from_map(&map, tile_map_transform, tile_scale),
