@@ -19,6 +19,7 @@ default = [
     "bevy/bevy_winit",
     "bevy/png",
     "bevy/render",
+    "bevy/x11",
 ]
 
 web = [
